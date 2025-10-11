@@ -2,61 +2,47 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>Ceol Gan Eagla — Tuner</title>
 <meta name="theme-color" content="#0b121a">
-<!-- © 2025 Gearóid MacUaid — Ceol Gan Eagla. Original code, all rights reserved. -->
 <style>
-:root{
-  --bg:#0b121a; --panel:#0f1824; --card:#101c2b; --ink:#eaf2ff; --muted:#9fb0c5;
-  --accent:#27c26b; --warn:#ff4d4d; --line:#1a2a3f; --flag:#2e7d32;
-}
-*{box-sizing:border-box} html,body{height:100%}
+:root{--bg:#0b121a;--panel:#0f1824;--card:#101c2b;--ink:#eaf2ff;--muted:#9fb0c5;--accent:#27c26b;--warn:#ff4d4d;--line:#1a2a3f;--flag:#2e7d32}
+*{box-sizing:border-box}html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif}
-
 .wrap{min-height:100dvh;display:grid;grid-template-rows:auto auto 1fr auto;gap:12px;padding:12px}
 header{display:flex;align-items:center;gap:12px}
-header img.logo{width:44px;height:44px;border-radius:10px;object-fit:cover;background:#0006}
+.logo{width:44px;height:44px;border-radius:10px;object-fit:cover;background:#0006}
 .title{font-size:28px;font-weight:800;letter-spacing:.4px}
 .badge{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:12px;color:var(--muted)}
 .dot{width:12px;height:12px;border-radius:50%;background:#222;margin-left:6px}
 .dot.live{background:var(--warn);box-shadow:0 0 12px #ff4d4d88}
-
 .controls{display:grid;gap:10px;grid-template-columns:1fr 1fr 1fr 1fr}
 .controls .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:10px 12px;display:flex;gap:10px;min-height:60px}
 label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
 select,input[type="number"]{width:100%;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:9px 10px;font-size:15px}
 button{appearance:none;border:none;cursor:pointer;background:linear-gradient(180deg,#1a283a,#0d1626);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-weight:800}
 button:active{transform:translateY(1px)}
-
 .stage{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:12px;display:grid;grid-template-rows:auto 1fr auto auto;gap:8px}
 .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
-
 .meter{position:relative;height:260px;background:linear-gradient(180deg,#0f1726,#0c1420);border:1px solid var(--line);border-radius:14px;display:flex;align-items:center;justify-content:center;overflow:hidden}
 canvas#gauge{width:100%;height:100%}
-
 .bigNote{background:var(--flag);color:#0b121a;font-weight:900;font-size:86px;text-align:center;border-radius:12px;line-height:1}
 .stats{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
 .pill{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-weight:800;min-width:100px;text-align:center}
-
+.rmsbar{width:120px;height:10px;background:#223448;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.rmsbar>i{display:block;height:100%;width:0;background:#61d6ff}
+.warnBadge{color:#fff;background:var(--warn);padding:6px 10px;border-radius:999px;font-size:12px;border:1px solid #0003}
 .metrowrap{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
 .ball{width:16px;height:16px;border-radius:50%;background:var(--muted)}
 .ball.on{background:var(--accent)}
-
 footer{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:13px}
-
 @media (max-width:980px){.controls{grid-template-columns:1fr 1fr}}
-@media (max-width:560px){
-  .controls{grid-template-columns:1fr}
-  .bigNote{font-size:72px}
-  .title{font-size:22px}
-}
+@media (max-width:560px){.controls{grid-template-columns:1fr}.bigNote{font-size:72px}.title{font-size:22px}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <!-- Replace with your real icon -->
     <img class="logo" src="icons/icon-192.png" alt="Ceol Gan Eagla">
     <div class="title">Ceol Gan Eagla — Tuner</div>
     <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
@@ -65,52 +51,44 @@ footer{display:flex;align-items:center;justify-content:space-between;gap:10px;fl
     </div>
   </header>
 
-  <!-- Controls -->
   <section class="controls">
-    <div class="card" title="Instrument & Tuning">
+    <div class="card">
       <div style="flex:1">
-        <label for="instrument">Instrument &amp; Tuning</label>
+        <label>Instrument &amp; Tuning</label>
         <select id="instrument"></select>
       </div>
       <div style="flex:1">
-        <label for="stringSel">String</label>
+        <label>String</label>
         <select id="stringSel"></select>
       </div>
     </div>
 
-    <div class="card" title="Reference & Gate">
+    <div class="card">
       <div style="flex:1">
-        <label for="a4">A4 (Hz)</label>
-        <select id="a4">
-          <option>436</option><option>438</option><option>439</option>
-          <option selected>440</option><option>441</option><option>442</option><option>444</option>
-        </select>
+        <label>A4 (Hz)</label>
+        <select id="a4"><option>436</option><option>438</option><option>439</option><option selected>440</option><option>441</option><option>442</option><option>444</option></select>
       </div>
       <div style="flex:1">
-        <label for="gate">Mic Sensitivity (Gate)</label>
+        <label>Mic Sensitivity (Gate)</label>
         <select id="gate">
-          <option value="0.005">Very High</option>
-          <option value="0.010" selected>High</option>
-          <option value="0.020">Medium</option>
-          <option value="0.040">Low</option>
+          <option value="0.002" selected>Very High</option>
+          <option value="0.005">High</option>
+          <option value="0.010">Medium</option>
+          <option value="0.020">Low</option>
         </select>
       </div>
     </div>
 
-    <div class="card" title="Metronome">
+    <div class="card">
       <div style="flex:1">
-        <label for="bpm">BPM</label>
+        <label>BPM</label>
         <input id="bpm" type="number" min="20" max="240" step="1" value="120">
       </div>
       <div style="flex:1">
-        <label for="sig">Time Signature</label>
+        <label>Time Signature</label>
         <select id="sig">
-          <option value="2/4">2/4</option>
-          <option value="3/4">3/4</option>
-          <option value="4/4" selected>4/4</option>
-          <option value="6/8">6/8</option>
-          <option value="9/8">9/8</option>
-          <option value="12/8">12/8</option>
+          <option value="2/4">2/4</option><option value="3/4">3/4</option><option value="4/4" selected>4/4</option>
+          <option value="6/8">6/8</option><option value="9/8">9/8</option><option value="12/8">12/8</option>
         </select>
       </div>
       <div style="display:flex;align-items:end;gap:8px">
@@ -119,7 +97,7 @@ footer{display:flex;align-items:center;justify-content:space-between;gap:10px;fl
       </div>
     </div>
 
-    <div class="card" title="Microphone">
+    <div class="card">
       <div style="display:flex;gap:8px;width:100%">
         <button id="micBtn" style="flex:1">Start Mic</button>
         <button id="stopAll" style="flex:1;background:linear-gradient(180deg,#3a1d1d,#24110e)">Stop All</button>
@@ -127,18 +105,15 @@ footer{display:flex;align-items:center;justify-content:space-between;gap:10px;fl
     </div>
   </section>
 
-  <!-- Stage -->
   <section class="stage">
     <div class="row">
       <span class="badge">A4 = <span id="a4Val">440</span> Hz</span>
       <span class="badge">RMS: <span id="rms">0.00</span></span>
-      <span class="badge">Noise: <span id="noise">OK</span></span>
+      <div class="rmsbar" title="Live mic level"><i id="rmsFill"></i></div>
+      <span id="noInput" class="warnBadge" style="display:none">No input</span>
     </div>
-
     <div class="meter"><canvas id="gauge" width="1000" height="480"></canvas></div>
-
     <div id="bigNote" class="bigNote">—</div>
-
     <div class="stats">
       <div class="pill">Note: <span id="note">—</span></div>
       <div class="pill">Freq: <span id="freq">—</span> Hz</div>
@@ -154,15 +129,23 @@ footer{display:flex;align-items:center;justify-content:space-between;gap:10px;fl
 </div>
 
 <script>
-/* ========= NOTE MATH ========= */
-const NAMES=["C","C♯","D","E♭","E","F","F♯","G","A♭","A","B♭","B"];
-const A4I=9+12*4;
+/* ===== basic utils ===== */
+const N=["C","C♯","D","E♭","E","F","F♯","G","A♭","A","B♭","B"], A4I=9+12*4;
 const idxToFreq=(i,a4)=>a4*Math.pow(2,(i-A4I)/12);
 const freqToIdx=(f,a4)=>Math.round(12*Math.log2(f/a4)+A4I);
-const nameFromIdx=i=>NAMES[(i%12+12)%12]+(Math.floor(i/12)-1);
-const cents = (f,t)=>1200*Math.log2(f/t);
+const nameFromIdx=i=>N[(i%12+12)%12]+(Math.floor(i/12)-1);
+const cents=(f,t)=>1200*Math.log2(f/t);
+const $=s=>document.querySelector(s);
 
-/* ========= TUNINGS ========= */
+const els={instrument:$("#instrument"),stringSel:$("#stringSel"),a4:$("#a4"),a4Val:$("#a4Val"),
+  micBtn:$("#micBtn"),stopAll:$("#stopAll"),liveDot:$("#liveDot"),micState:$("#micState"),
+  rms:$("#rms"),rmsFill:$("#rmsFill"),noInput:$("#noInput"),bigNote:$("#bigNote"),
+  note:$("#note"),freq:$("#freq"),cents:$("#cents"),target:$("#target"),
+  gauge:$("#gauge"),bpm:$("#bpm"),sig:$("#sig"),metroBtn:$("#metroBtn"),ball:$("#ball")};
+document.getElementById("y").textContent=new Date().getFullYear();
+els.a4Val.textContent=els.a4.value;
+
+/* ===== tunings ===== */
 const TUNINGS={
   "Chromatic (no target)":[],
   "Violin — GDAE (G3 D4 A4 E5)":["G3","D4","A4","E5"],
@@ -176,241 +159,178 @@ const TUNINGS={
   "Bouzouki — ADAD (A2 D3 A3 D4)":["A2","D3","A3","D4"],
   "Whistle — D (D5)":["D5"]
 };
-function parseNote(n){
+function parse(n){
   const m=n.replace("♯","#").replace("♭","b").match(/^([A-Ga-g])([#b]?)(-?\d+)$/);
   const map={C:0,"C#":1,"Db":1,D:2,"D#":3,"Eb":3,E:4,F:5,"F#":6,"Gb":6,G:7,"G#":8,"Ab":8,A:9,"A#":10,"Bb":10,B:11};
-  const k=m[1].toUpperCase()+(m[2]||""); return map[k]+12*(parseInt(m[3],10)+1);
+  return map[m[1].toUpperCase()+(m[2]||"")] + 12*(parseInt(m[3],10)+1);
 }
-
-/* ========= DOM ========= */
-const $=s=>document.querySelector(s);
-const els={
-  instrument:$("#instrument"), stringSel:$("#stringSel"),
-  a4:$("#a4"), a4Val:$("#a4Val"), gate:$("#gate"),
-  micBtn:$("#micBtn"), stopAll:$("#stopAll"), liveDot:$("#liveDot"),
-  rms:$("#rms"), noise:$("#noise"), bigNote:$("#bigNote"),
-  note:$("#note"), freq:$("#freq"), cents:$("#cents"), target:$("#target"),
-  gauge:$("#gauge"), micState:$("#micState"),
-  bpm:$("#bpm"), sig:$("#sig"), metroBtn:$("#metroBtn"), ball:$("#ball")
-};
-document.getElementById("y").textContent=new Date().getFullYear();
-els.a4Val.textContent=els.a4.value;
 for(const k of Object.keys(TUNINGS)){ const o=document.createElement("option"); o.value=k; o.textContent=k; els.instrument.appendChild(o); }
 els.instrument.value="Violin — GDAE (G3 D4 A4 E5)";
 function updateStrings(){
   els.stringSel.innerHTML="";
   const set=TUNINGS[els.instrument.value]||[];
-  if(set.length===0){ els.stringSel.disabled=true; els.target.textContent="—"; }
-  else{
-    els.stringSel.disabled=false;
-    set.forEach((n,i)=>{const o=document.createElement("option"); o.value=parseNote(n); o.textContent=`String ${i+1} — ${n}`; els.stringSel.appendChild(o);});
-    els.stringSel.selectedIndex=set.length-1;
-  }
+  if(!set.length){ els.stringSel.disabled=true; els.target.textContent="—"; }
+  else{ els.stringSel.disabled=false; set.forEach((n,i)=>{const o=document.createElement("option"); o.value=parse(n); o.textContent=`String ${i+1} — ${n}`; els.stringSel.appendChild(o); }); els.stringSel.selectedIndex=set.length-1; }
 }
 updateStrings();
 els.instrument.addEventListener("change",updateStrings);
 els.a4.addEventListener("change",()=>els.a4Val.textContent=els.a4.value);
 
-/* ========= Gauge (smooth “lax” needle) ========= */
-const gtx=els.gauge.getContext("2d");
-let displayAngle=0;        // current rendered angle (deg)
-let targetAngle=0;         // target angle (deg)
-let easing=0.15;           // larger = quicker
+/* ===== gauge (smooth) ===== */
+const gtx=els.gauge.getContext("2d"); let displayAngle=0,targetAngle=0,easing=0.15, dialInTune=false;
 function drawGaugeBase(){
-  const w=els.gauge.width,h=els.gauge.height,cx=w/2,cy=h*0.86,r=h*0.80;
-  gtx.clearRect(0,0,w,h);
-  gtx.save(); gtx.translate(cx,cy);
+  const w=els.gauge.width,h=els.gauge.height,cx=w/2,cy=h*0.86,r=h*0.8;
+  gtx.clearRect(0,0,w,h); gtx.save(); gtx.translate(cx,cy);
   for(let i=-50;i<=50;i++){
     const a=(-90+i*1.8)*Math.PI/180, L=(i%10===0)?22:(i%5===0?12:6);
     gtx.strokeStyle="#294058"; gtx.lineWidth=4; gtx.beginPath();
-    gtx.moveTo(r*Math.cos(a), r*Math.sin(a));
-    gtx.lineTo((r-L)*Math.cos(a), (r-L)*Math.sin(a));
-    gtx.stroke();
-    if(i%10===0 && i!==0){
-      gtx.fillStyle="#6181a0"; gtx.font="20px system-ui"; gtx.textAlign="center";
-      const tx=(r-38)*Math.cos(a), ty=(r-38)*Math.sin(a); gtx.fillText(Math.abs(i),tx,ty);
-    }
+    gtx.moveTo(r*Math.cos(a),r*Math.sin(a)); gtx.lineTo((r-L)*Math.cos(a),(r-L)*Math.sin(a)); gtx.stroke();
+    if(i%10===0 && i!==0){ gtx.fillStyle="#6181a0"; gtx.font="20px system-ui"; gtx.textAlign="center";
+      const tx=(r-38)*Math.cos(a),ty=(r-38)*Math.sin(a); gtx.fillText(Math.abs(i),tx,ty); }
   }
   gtx.beginPath(); gtx.strokeStyle="#213248"; gtx.lineWidth=10; gtx.arc(0,0,r-44,-Math.PI,0); gtx.stroke();
   gtx.beginPath(); gtx.strokeStyle="#2f9e60"; gtx.lineWidth=14; const ok=6*Math.PI/180; gtx.arc(0,0,r-44,-ok,ok); gtx.stroke();
   gtx.restore();
 }
-function drawNeedle(inTune=false){
-  const w=els.gauge.width,h=els.gauge.height,cx=w/2,cy=h*0.86,r=h*0.80;
+function drawNeedle(inTune){
+  const w=els.gauge.width,h=els.gauge.height,cx=w/2,cy=h*0.86,r=h*0.8;
   gtx.save(); gtx.translate(cx,cy);
-  const a=(-90+displayAngle)*Math.PI/180;
-  gtx.rotate(a);
+  const a=(-90+displayAngle)*Math.PI/180; gtx.rotate(a);
   gtx.strokeStyle=inTune?"#2ce07c":"#eaeaea"; gtx.fillStyle=inTune?"#2ce07c":"#eaeaea";
   gtx.lineWidth=4; gtx.beginPath(); gtx.moveTo(0,0); gtx.lineTo(0,-r+56); gtx.stroke();
   gtx.beginPath(); gtx.arc(0,0,18,0,Math.PI*2); gtx.fill(); gtx.restore();
 }
-drawGaugeBase();
-
-/* Eased rendering loop for smooth dial */
-let dialInTune=false;
-function render(){
-  displayAngle += (targetAngle - displayAngle) * easing; // ease towards target
-  drawGaugeBase(); drawNeedle(dialInTune);
-  requestAnimationFrame(render);
-}
+function render(){ displayAngle += (targetAngle-displayAngle)*easing; drawGaugeBase(); drawNeedle(dialInTune); requestAnimationFrame(render) }
 render();
 
-/* ========= Audio / Mic (mobile compatible) ========= */
+/* ===== audio/mic (robust mobile) ===== */
 let ctx, mic, analyser, buf, rafId;
-let smoothedCents = 0;            // exponential smoothing for “lax” feel
-const centsAlpha = 0.25;          // 0..1 lower = smoother
+let smoothedCents=0; const centsAlpha=0.25;
 
-// ensure context resumes on user gesture + page return (iOS)
 function ensureAudioContext(){
   if(!ctx) ctx = new (window.AudioContext||window.webkitAudioContext)({latencyHint:"interactive"});
   if(ctx.state==="suspended") ctx.resume();
   return ctx;
 }
+// iOS unlock helper (runs when you press Start Mic)
+async function unlockIOS(){
+  const t=ctx.currentTime+0.01;
+  const n=ctx.createBufferSource(); n.buffer=ctx.createBuffer(1,1,ctx.sampleRate);
+  n.connect(ctx.destination); n.start(t); n.stop(t+0.01);
+}
+
 document.addEventListener("visibilitychange",()=>{ if(ctx && ctx.state==="suspended") ctx.resume(); });
 
 async function startMic(){
   try{
-    ensureAudioContext();
-    // iOS requires sampleRate-friendly settings; omit explicit rate to let Safari choose.
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio:{
-        echoCancellation:false, noiseSuppression:false, autoGainControl:false
-      }
-    });
+    ensureAudioContext(); await unlockIOS();
+    const stream = await navigator.mediaDevices.getUserMedia({audio:true}); // broadest compatibility
     mic = ctx.createMediaStreamSource(stream);
-    analyser = ctx.createAnalyser();
-    analyser.fftSize = 2048;
-    analyser.smoothingTimeConstant = 0.85; // smoother waveform
+    analyser = ctx.createAnalyser(); analyser.fftSize=2048; analyser.smoothingTimeConstant=0.85;
     buf = new Float32Array(analyser.fftSize);
     mic.connect(analyser);
-    els.micState.textContent="ON";
-    els.liveDot.classList.add("live");
-    els.micBtn.textContent="Stop Mic";
+    els.micState.textContent="ON"; els.liveDot.classList.add("live"); els.micBtn.textContent="Stop Mic";
+    els.noInput.style.display="none";
     tick();
   }catch(e){
-    alert("Microphone not available: "+e.message+"\nTip: use HTTPS (GitHub Pages), give mic permission, and ensure no other app is using the mic.");
+    alert("Mic error: "+e.message+"\n• Use HTTPS (GitHub Pages)\n• Allow microphone permission\n• Close other apps using the mic");
   }
-}
-function stopMicUI(){
-  els.micState.textContent="OFF";
-  els.liveDot.classList.remove("live");
-  els.micBtn.textContent="Start Mic";
-  els.bigNote.textContent="—";
-  targetAngle = 0;
 }
 function stopMic(){
   if(rafId) cancelAnimationFrame(rafId), rafId=null;
   if(mic && mic.mediaStream){ mic.mediaStream.getTracks().forEach(t=>t.stop()); }
-  mic=null; analyser=null; buf=null; stopMicUI();
+  mic=null; analyser=null; buf=null; els.micState.textContent="OFF"; els.liveDot.classList.remove("live"); els.micBtn.textContent="Start Mic";
 }
-function yin(buffer, sr){
-  const thr=0.15, tauMax=Math.floor(sr/50), tauMin=Math.floor(sr/1000), N=buffer.length;
-  const diff=new Float32Array(tauMax), cmnd=new Float32Array(tauMax); cmnd[0]=1;
-  for(let tau=tauMin;tau<tauMax;tau++){ let sum=0; for(let i=0;i<N-tau;i++){ const d=buffer[i]-buffer[i+tau]; sum+=d*d; } diff[tau]=sum; }
-  let run=0,best=1e9,bTau=-1;
-  for(let tau=tauMin;tau<tauMax;tau++){ run+=diff[tau]; cmnd[tau]=diff[tau]*tau/run; if(tau>tauMin && cmnd[tau]<thr && cmnd[tau]<best){ best=cmnd[tau]; bTau=tau; } }
-  if(bTau<0) return null;
-  const x0=Math.max(1,bTau-1), x2=Math.min(cmnd.length-1,bTau+1);
-  const s0=cmnd[x0], s1=cmnd[bTau], s2=cmnd[x2];
-  const tau=bTau + (s2 - s0)/(2*(2*s1 - s2 - s0));
+
+function yin(b,sr){
+  const thr=0.15, tauMax=Math.floor(sr/50), tauMin=Math.floor(sr/1000), N=b.length;
+  const diff=new Float32Array(tauMax), cm=new Float32Array(tauMax); cm[0]=1;
+  for(let t=tauMin;t<tauMax;t++){ let s=0; for(let i=0;i<N-t;i++){ const d=b[i]-b[i+t]; s+=d*d } diff[t]=s }
+  let run=0, best=1e9, bt=-1;
+  for(let t=tauMin;t<tauMax;t++){ run+=diff[t]; cm[t]=diff[t]*t/run; if(t>tauMin && cm[t]<thr && cm[t]<best){best=cm[t]; bt=t;} }
+  if(bt<0) return null;
+  const x0=Math.max(1,bt-1), x2=Math.min(cm.length-1,bt+1);
+  const s0=cm[x0], s1=cm[bt], s2=cm[x2];
+  const tau=bt + (s2-s0)/(2*(2*s1 - s2 - s0));
   return sr/tau;
 }
+
 function tick(){
   rafId=requestAnimationFrame(tick);
   if(!analyser) return;
+
   analyser.getFloatTimeDomainData(buf);
+  // check if buffer is all ~0 (no input device)
+  let sumAbs=0; for(let i=0;i<buf.length;i++) sumAbs += Math.abs(buf[i]);
+  const silent = sumAbs/buf.length < 1e-5;
 
-  // RMS + noise gate
-  let rms=0; for(let i=0;i<buf.length;i++) rms += buf[i]*buf[i]; rms = Math.sqrt(rms/buf.length);
-  els.rms.textContent=rms.toFixed(2);
-  const gate=parseFloat(els.gate.value);
-  els.noise.textContent = rms<gate ? "Quiet" : (rms>gate*4 ? "Noisy" : "OK");
-  if(rms<gate){ dialInTune=false; els.bigNote.style.background="var(--flag)"; targetAngle += (0 - targetAngle)*0.1; return; }
+  let rms=0; for(let i=0;i<buf.length;i++) rms += buf[i]*buf[i]; rms=Math.sqrt(rms/buf.length);
+  els.rms.textContent=rms.toFixed(3);
+  els.rmsFill.style.width = Math.min(1, rms*5)*100 + "%";
+  els.noInput.style.display = silent ? "inline-block" : "none";
 
-  const sr = ctx.sampleRate || 48000;
+  const gate=parseFloat($("#gate").value);
+  if(rms<gate || silent){ targetAngle += (0-targetAngle)*0.1; dialInTune=false; return; }
+
+  const sr=ctx.sampleRate||48000;
   const f = yin(buf, sr);
-  if(!f || f<45 || f>1500){ dialInTune=false; targetAngle += (0 - targetAngle)*0.1; return; }
+  if(!f || f<45 || f>1500){ targetAngle += (0-targetAngle)*0.1; dialInTune=false; return; }
 
-  // nearest note vs target string
   const a4=+els.a4.value;
   const idx=freqToIdx(f,a4);
-  const autoName=nameFromIdx(idx);
   const targetIdx = els.stringSel.disabled || !els.stringSel.value ? idx : +els.stringSel.value;
   const targetHz = idxToFreq(targetIdx, a4);
   const dCents = cents(f, targetHz);
 
-  // smoothing on cents for “lax” dial
-  smoothedCents = smoothedCents + (dCents - smoothedCents) * centsAlpha;
-  const limited = Math.max(-50, Math.min(50, smoothedCents));
-  targetAngle = limited * 1.8;
+  smoothedCents += (dCents - smoothedCents)*0.25;
+  const lim = Math.max(-50, Math.min(50, smoothedCents));
+  targetAngle = lim*1.8;
 
-  const inTune = Math.abs(dCents) < 6;
-  dialInTune = inTune;
-
-  els.bigNote.style.background = inTune ? "var(--accent)" : "var(--flag)";
+  const ok=Math.abs(dCents)<6; dialInTune=ok;
+  els.bigNote.style.background = ok?"var(--accent)":"var(--flag)";
   els.bigNote.textContent = nameFromIdx(targetIdx).replace("♯","#");
-  els.note.textContent = NAMES[(idx%12+12)%12];
+  els.note.textContent = N[(idx%12+12)%12];
   els.freq.textContent = f.toFixed(2);
   els.cents.textContent = (dCents>0?"+":"")+dCents.toFixed(0);
   els.target.textContent = nameFromIdx(targetIdx);
 }
 
-/* ========= Metronome (accented, smooth ball) ========= */
+/* ===== metronome ===== */
 class Metro{
-  constructor(ctx){ this.ctx=ctx; this.timer=null; this.next=0; this.bpm=120; this.pattern=[1,0,0,0]; }
-  set(bpm,sig){ this.bpm=Math.max(20,Math.min(240,bpm)); this.pattern=this.sigToPattern(sig); }
-  sigToPattern(sig){
-    const [t,b]=sig.split("/").map(Number);
-    if(b===8) return Array.from({length:t},(_,i)=> (i%3===0?1:0)); // compound
-    return Array.from({length:t},(_,i)=> i===0?1:0);                // simple
-  }
-  click(accent=false){
-    const t=this.ctx.currentTime+0.005;
-    const osc=this.ctx.createOscillator(), env=this.ctx.createGain();
+  constructor(ctx){ this.ctx=ctx; this.timer=null; this.next=0; this.bpm=120; this.pattern=[1,0,0,0] }
+  set(bpm,sig){ this.bpm=Math.max(20,Math.min(240,bpm)); this.pattern=this.sig(sig) }
+  sig(s){ const [t,b]=s.split("/").map(Number); return b===8?Array.from({length:t},(_,i)=>i%3===0):Array.from({length:t},(_,i)=>i===0) }
+  click(accent){
+    const t=this.ctx.currentTime+0.005, osc=this.ctx.createOscillator(), env=this.ctx.createGain();
     osc.type="square"; osc.frequency.setValueAtTime(accent?1000:760,t);
     env.gain.setValueAtTime(0,t); env.gain.linearRampToValueAtTime(accent?0.7:0.45,t+0.01);
     env.gain.exponentialRampToValueAtTime(0.0001,t+0.12);
     osc.connect(env).connect(this.ctx.destination); osc.start(t); osc.stop(t+0.15);
   }
-  start(bpm,sig){
-    this.set(bpm,sig); if(this.timer) return;
-    if(this.ctx.state==="suspended") this.ctx.resume();
-    this.next=this.ctx.currentTime; let i=0;
-    const loop=()=>{
-      const spb=60/this.bpm;
-      while(this.next < this.ctx.currentTime+0.1){
-        const acc=!!this.pattern[i%this.pattern.length];
-        this.click(acc); i++; this.next+=spb; bounce();
-      }
-      this.timer=setTimeout(loop,25);
-    }; loop();
+  start(bpm,sig){ this.set(bpm,sig); if(this.timer) return; if(this.ctx.state==="suspended") this.ctx.resume();
+    this.next=this.ctx.currentTime; let i=0; const loop=()=>{ const spb=60/this.bpm;
+      while(this.next < this.ctx.currentTime+0.1){ this.click(!!this.pattern[i%this.pattern.length]); i++; this.next+=spb; bounce(); }
+      this.timer=setTimeout(loop,25); }; loop();
   }
   stop(){ if(this.timer){ clearTimeout(this.timer); this.timer=null; } }
 }
 let metro=null;
-function bounce(){
-  els.ball.classList.add("on");
-  els.ball.animate([{transform:"translateX(-8px)"},{transform:"translateX(8px)"},{transform:"translateX(0)"}],{duration:180});
-  setTimeout(()=>els.ball.classList.remove("on"),150);
-}
+function bounce(){ els.ball.classList.add("on"); els.ball.animate([{transform:"translateX(-8px)"},{transform:"translateX(8px)"},{transform:"translateX(0)"}],{duration:180}); setTimeout(()=>els.ball.classList.remove("on"),150) }
 
-/* ========= Buttons ========= */
-els.micBtn.addEventListener("click", async ()=>{
-  if(!mic){ await startMic(); } else { stopMic(); }
-});
-els.stopAll.addEventListener("click", ()=>{
-  stopMic(); if(metro){ metro.stop(); els.metroBtn.textContent="Start Metronome"; }
-});
+/* ===== buttons ===== */
+$("#instrument").addEventListener("change",updateStrings);
+$("#a4").addEventListener("change",()=>els.a4Val.textContent=els.a4.value);
+
+els.micBtn.addEventListener("click", async ()=>{ if(!mic) await startMic(); else stopMic(); });
+els.stopAll.addEventListener("click", ()=>{ stopMic(); if(metro){ metro.stop(); els.metroBtn.textContent="Start Metronome"; } });
+
 els.metroBtn.addEventListener("click", async ()=>{
   if(!metro){ ensureAudioContext(); metro=new Metro(ctx); }
-  if(els.metroBtn.textContent.startsWith("Start")){
-    metro.start(+els.bpm.value||120, els.sig.value);
-    els.metroBtn.textContent="Stop Metronome";
-  }else{ metro.stop(); els.metroBtn.textContent="Start Metronome"; }
+  if(els.metroBtn.textContent.startsWith("Start")){ metro.start(+els.bpm.value||120, els.sig.value); els.metroBtn.textContent="Stop Metronome"; }
+  else{ metro.stop(); els.metroBtn.textContent="Start Metronome"; }
 });
-els.bpm.addEventListener("change", ()=>{ if(metro) metro.set(+els.bpm.value||120, els.sig.value); });
-els.sig.addEventListener("change", ()=>{ if(metro) metro.set(+els.bpm.value||120, els.sig.value); });
-
+$("#bpm").addEventListener("change", ()=>{ if(metro) metro.set(+els.bpm.value||120, els.sig.value) });
+$("#sig").addEventListener("change", ()=>{ if(metro) metro.set(+els.bpm.value||120, els.sig.value) });
 </script>
 </body>
 </html>
