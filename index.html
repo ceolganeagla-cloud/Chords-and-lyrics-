@@ -13,6 +13,7 @@
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
 body{background:var(--bg);color:var(--ink);font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;overflow:hidden}
+
 .app{height:100dvh;display:grid;gap:10px;grid-template-rows:56px 118px 1fr 38px;padding:10px;max-width:1200px;margin:0 auto}
 header{display:flex;align-items:center;gap:10px}
 .logo{width:40px;height:40px;border-radius:10px;object-fit:cover;background:#0006}
@@ -36,25 +37,30 @@ button:active{transform:translateY(1px)}
 .rmsbar>i{display:block;height:100%;width:0;background:#61d6ff}
 .warnBadge{color:#fff;background:var(--warn);padding:4px 8px;border-radius:999px;font-size:12px;border:1px solid #0003}
 
-.meter{position:relative;min-height:0;height:100%;border-radius:14px;overflow:hidden;border:1px solid #0a1220;box-shadow:inset 0 8px 28px #0009, 0 8px 18px #0006}
+.meter{position:relative;min-height:0;height:100%;border-radius:16px;overflow:hidden;border:1px solid #0a1220;box-shadow:inset 0 8px 28px #0009, 0 8px 18px #0006}
 canvas#g{width:100%;height:100%}
 
-/* Big status row under dial */
-.statusRow{
-  display:flex; gap:10px; justify-content:center; align-items:center; flex-wrap:wrap;
+/* IN TUNE overlay (big, in front of the dial) */
+.overlay{
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none;
 }
-.bigNote{
-  background:var(--flag); color:#0b121a; font-weight:900;
-  font-size:clamp(38px, 11vw, 64px); text-align:center; border-radius:12px; line-height:1;
-  padding:10px 16px; min-width:220px;
+#inTuneBig{
+  display:none;
+  font-weight:900; letter-spacing:.8px;
+  font-size:clamp(28px, 9vw, 64px);
+  padding:.2em .6em; border-radius:14px;
+  color:#0b121a; background:#2fe17d;
+  box-shadow:0 0 0 2px #2b5e45aa, 0 0 40px #2be07c55;
+  border:1px solid #2b5e45;
 }
+
+/* Stats row */
+.statusRow{display:flex; gap:10px; justify-content:center; align-items:center; flex-wrap:wrap; margin-top:6px}
+.bigNote{background:var(--flag); color:#0b121a; font-weight:900; font-size:clamp(36px, 10vw, 60px); text-align:center; border-radius:12px; line-height:1; padding:10px 16px; min-width:220px}
 .state{font-weight:900;padding:8px 14px;border-radius:999px;border:1px solid var(--line);font-size:14px}
 .state.low{background:#162436;color:#7ec8ff}
 .state.high{background:#2a1616;color:#ff8e8e}
 .state.ok{background:#123222;color:#aef5c9;border-color:#2b5e45;box-shadow:0 0 0 2px #2b5e4522, 0 0 20px 2px #2be07c33 inset}
-.state.ok::after{content:"  ✓"; font-weight:900}
-
-/* Small stats pills */
 .stats{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
 .pill{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-weight:800;min-width:100px;text-align:center}
 
@@ -134,9 +140,11 @@ footer{display:flex;align-items:center;justify-content:space-between;gap:8px;col
       <span id="noInput" class="warnBadge" style="display:none">No input</span>
     </div>
 
-    <div class="meter"><canvas id="g"></canvas></div>
+    <div class="meter">
+      <canvas id="g"></canvas>
+      <div class="overlay"><div id="inTuneBig">IN&nbsp;TUNE</div></div>
+    </div>
 
-    <!-- BIG STATUS: shows Perfect Pitch / Too Low / Too High -->
     <div class="statusRow">
       <div id="big" class="bigNote">—</div>
       <div id="state" class="state">—</div>
@@ -157,8 +165,10 @@ footer{display:flex;align-items:center;justify-content:space-between;gap:8px;col
 </div>
 
 <script>
-/* ===== DIRECTION (keep as -1 if that matched your device) ===== */
-const DIRECTION = -1;
+/* ===== CONFIG ===== */
+const DIRECTION = -1;                  // keep this value if it fixed direction for your device
+const PERFECT_THRESHOLD = 5;           // ±5¢ counts as in tune
+const PERFECT_HOLD_FRAMES = 8;         // stability frames before showing “IN TUNE”
 
 /* ===== Music math ===== */
 const N=["C","C♯","D","E♭","E","F","F♯","G","A♭","A","B♭","B"], A4I=9+12*4;
@@ -173,7 +183,7 @@ const els={inst:$("#inst"), string:$("#string"), a4:$("#a4"), a4v:$("#a4v"),
   freq:$("#freq"), cents:$("#cents"), target:$("#target"),
   rms:$("#rms"), rmsFill:$("#rmsFill"), noInput:$("#noInput"),
   bpm:$("#bpm"), sig:$("#sig"), metroBtn:$("#metroBtn"), detected:$("#detected"),
-  state:$("#state")};
+  state:$("#state"), inTuneBig:$("#inTuneBig")};
 document.getElementById("y").textContent=new Date().getFullYear();
 els.a4v.textContent=els.a4.value;
 
@@ -228,61 +238,87 @@ function resizeCanvas(){
 }
 window.addEventListener('resize', resizeCanvas);
 
-/* ===== Dial ===== */
+/* ===== Dial (pro: numbers outside so they’re never blocked) ===== */
 let dispAngle=0, targAngle=0, easing=0.14, inTune=false;
 function drawGaugeBase(){
-  const cx=cssW/2, cy=cssH*0.86, r=cssH*0.80;
+  const cx=cssW/2, cy=cssH*0.86, r=cssH*0.78;
   ctx.clearRect(0,0,cssW,cssH);
 
-  // Face gradient
-  const grad = ctx.createLinearGradient(0, cy-r, 0, cy);
-  grad.addColorStop(0, '#132236'); grad.addColorStop(1, '#0c1526');
-  ctx.fillStyle = grad;
+  // Face: subtle gradient + glass highlight
+  const face = ctx.createLinearGradient(0, cy-r, 0, cy);
+  face.addColorStop(0, '#132236'); face.addColorStop(1, '#0c1526');
+  ctx.fillStyle = face;
   ctx.beginPath(); ctx.arc(cx,cy,r,Math.PI,0); ctx.lineTo(cx,cy); ctx.closePath(); ctx.fill();
 
+  // glass reflection
+  const glass = ctx.createLinearGradient(0, cy-r, 0, cy-r*0.5);
+  glass.addColorStop(0,'#ffffff22'); glass.addColorStop(1,'#ffffff00');
+  ctx.fillStyle=glass; ctx.beginPath(); ctx.arc(cx,cy,r-6,Math.PI,-Math.PI*0.65); ctx.lineTo(cx,cy); ctx.closePath(); ctx.fill();
+
   ctx.save(); ctx.translate(cx,cy);
+
+  // ticks + numbers OUTSIDE the tick circle for clarity
   for(let i=-50;i<=50;i++){
-    const ang=(-90+i*1.8)*Math.PI/180, L=(i%10===0)?24:(i%5===0?14:7);
+    const ang=(-90+i*1.8)*Math.PI/180;
+    const L=(i%10===0)?26:(i%5===0?16:9);
+    const outer=r+10; // numbers & outer tick base
+    const inner=outer-L;
+
+    // tick
     ctx.strokeStyle = i===0 ? "#3bd08b" : "#2a4058";
     ctx.lineWidth = i===0 ? 5 : 3;
     ctx.beginPath();
-    ctx.moveTo(r*Math.cos(ang), r*Math.sin(ang));
-    ctx.lineTo((r-L)*Math.cos(ang), (r-L)*Math.sin(ang)); ctx.stroke();
+    ctx.moveTo(outer*Math.cos(ang), outer*Math.sin(ang));
+    ctx.lineTo(inner*Math.cos(ang), inner*Math.sin(ang));
+    ctx.stroke();
+
+    // labels every 10¢ placed OUTSIDE the ring
     if(i%10===0 && i!==0){
-      ctx.fillStyle="#85a4c3"; ctx.font="18px system-ui"; ctx.textAlign="center"; ctx.textBaseline="middle";
-      const tx=(r-44)*Math.cos(ang), ty=(r-44)*Math.sin(ang); ctx.fillText(Math.abs(i), tx, ty);
+      ctx.fillStyle="#b8c9db";
+      ctx.font="700 18px system-ui";
+      ctx.textAlign="center"; ctx.textBaseline="middle";
+      const tx=(outer+16)*Math.cos(ang), ty=(outer+16)*Math.sin(ang);
+      ctx.fillText(Math.abs(i), tx, ty);
     }
   }
-  // In-tune window
-  ctx.beginPath(); ctx.strokeStyle="#2fe17d"; ctx.lineWidth=14; const ok=6*Math.PI/180; ctx.arc(0,0,r-46,-ok,ok); ctx.stroke();
+
+  // in-tune window (inside)
+  ctx.beginPath(); ctx.strokeStyle="#2fe17d"; ctx.lineWidth=14; const ok=6*Math.PI/180;
+  ctx.arc(0,0,r-38,-ok,ok); ctx.stroke();
+
+  // inner shadow rim
+  ctx.beginPath(); ctx.strokeStyle="#0a1220"; ctx.lineWidth=10; ctx.arc(0,0,r-34,-Math.PI,0); ctx.stroke();
+
   ctx.restore();
 }
 function drawNeedle(ok){
-  const cx=cssW/2, cy=cssH*0.86, r=cssH*0.80;
+  const cx=cssW/2, cy=cssH*0.86, r=cssH*0.78;
   ctx.save(); ctx.translate(cx,cy);
   const ang = (-90 + dispAngle) * Math.PI/180;
   ctx.rotate(ang);
+
+  // Needle
   const g = ctx.createLinearGradient(0,-r,0,0);
-  g.addColorStop(0, ok ? "#8ef3c4" : "#eaeaea"); g.addColorStop(1, ok ? "#2ce07c" : "#bfc7d2");
+  g.addColorStop(0, ok ? "#8ef3c4" : "#eaeaea");
+  g.addColorStop(1, ok ? "#2ce07c" : "#bfc7d2");
   ctx.strokeStyle=g; ctx.lineWidth=5; ctx.lineCap="round";
-  ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-r+58); ctx.stroke();
-  // hub
+  ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-r+64); ctx.stroke();
+
+  // Center hub
   const hubR=20, m=ctx.createRadialGradient(0,0,4,0,0,hubR);
   m.addColorStop(0,"#f7f7f7"); m.addColorStop(0.5,"#d0d6df"); m.addColorStop(1,"#8b96a8");
   ctx.fillStyle=m; ctx.beginPath(); ctx.arc(0,0,hubR,0,Math.PI*2); ctx.fill();
   ctx.strokeStyle="#1b2a3d"; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(0,0,hubR,0,Math.PI*2); ctx.stroke();
+
   ctx.restore();
 }
 function animateDial(){ dispAngle += (targAngle - dispAngle) * easing; drawGaugeBase(); drawNeedle(inTune); requestAnimationFrame(animateDial); }
 resizeCanvas(); animateDial();
 
-/* ===== Audio / Pitch + Auto-String + Perfect Pitch badge ===== */
+/* ===== Audio / Pitch + Auto-String + “IN TUNE” overlay ===== */
 let AC, micNode, analyser, buf, rafId;
 let smoothCents = 0; const centsAlpha = 0.25;
 let detectHoldIdx = null, detectHoldFrames = 0;
-// small hysteresis to avoid flicker
-const PERFECT_THRESHOLD = 4;         // cents
-const PERFECT_HOLD_FRAMES = 8;       // ~ stable frames before showing Perfect Pitch
 let perfectFrames = 0;
 
 function ensureAC(){ if(!AC) AC = new (window.AudioContext||window.webkitAudioContext)({latencyHint:"interactive"}); if(AC.state==="suspended") AC.resume(); return AC; }
@@ -291,6 +327,7 @@ document.addEventListener("visibilitychange",()=>{ if(AC && AC.state==="suspende
 async function startMic(){
   try{
     ensureAC();
+    // iOS unlock
     const s=AC.createBufferSource(); s.buffer=AC.createBuffer(1,1,AC.sampleRate); s.connect(AC.destination); s.start(); s.stop();
     const stream = await navigator.mediaDevices.getUserMedia({audio:true});
     micNode = AC.createMediaStreamSource(stream);
@@ -306,8 +343,8 @@ function stopMic(){
   if(micNode && micNode.mediaStream){ micNode.mediaStream.getTracks().forEach(t=>t.stop()); }
   micNode=null; analyser=null; buf=null;
   els.micState.textContent="OFF"; els.dot.classList.remove('live'); els.micBtn.textContent="Start Mic";
-  targAngle=0; inTune=false; els.big.textContent="—"; setStateText("—","");
-  els.detected.textContent = "Detected: —"; perfectFrames=0;
+  targAngle=0; inTune=false; els.big.textContent="—"; setState("—","");
+  els.detected.textContent = "Detected: —"; perfectFrames=0; els.inTuneBig.style.display="none";
 }
 
 function yin(b,sr){
@@ -341,7 +378,7 @@ function loop(){
 
   analyser.getFloatTimeDomainData(buf);
 
-  // level check
+  // level
   let sumAbs=0; for(let i=0;i<buf.length;i++) sumAbs += Math.abs(buf[i]);
   const silent = sumAbs/buf.length < 1e-5;
 
@@ -351,11 +388,11 @@ function loop(){
   els.noInput.style.display = silent ? "inline-block" : "none";
 
   const gate=parseFloat(els.gate.value);
-  if(rms<gate || silent){ inTune=false; targAngle += (0 - targAngle)*0.12; setStateText("—",""); perfectFrames=0; return; }
+  if(rms<gate || silent){ inTune=false; targAngle += (0 - targAngle)*0.12; setState("—",""); perfectFrames=0; els.inTuneBig.style.display="none"; return; }
 
   const sr=AC.sampleRate||48000;
   const f = yin(buf, sr);
-  if(!f || f<45 || f>1500){ inTune=false; targAngle += (0 - targAngle)*0.12; setStateText("—",""); perfectFrames=0; return; }
+  if(!f || f<45 || f>1500){ inTune=false; targAngle += (0 - targAngle)*0.12; setState("—",""); perfectFrames=0; els.inTuneBig.style.display="none"; return; }
 
   const a4=+els.a4.value;
 
@@ -381,23 +418,26 @@ function loop(){
   const targetHz = idxToFreq(targetIdx, a4);
   const dc = centsOff(f, targetHz);
 
-  // Smooth cents for relaxed dial
+  // Smooth cents
   smoothCents += (dc - smoothCents) * 0.25;
   const lim = Math.max(-50, Math.min(50, smoothCents));
   targAngle = DIRECTION * lim * 1.8;
 
-  // PERFECT PITCH logic with hold to prevent flicker
+  // Perfect window ±5¢ with small hold
   const absC = Math.abs(dc);
   if(absC <= PERFECT_THRESHOLD){ perfectFrames++; } else { perfectFrames = 0; }
   if(perfectFrames >= PERFECT_HOLD_FRAMES){
-    inTune = true; setStateText("PERFECT PITCH","ok");
+    inTune = true; setState("PERFECT (±5¢)","ok");
+    els.inTuneBig.style.display="block";   // big overlay
   } else if(dc < 0){
-    inTune = false; setStateText("TOO LOW","low");
+    inTune = false; setState("TOO LOW","low");
+    els.inTuneBig.style.display="none";
   } else {
-    inTune = false; setStateText("TOO HIGH","high");
+    inTune = false; setState("TOO HIGH","high");
+    els.inTuneBig.style.display="none";
   }
 
-  // Other UI
+  // UI
   els.big.style.background = inTune ? "var(--accent)" : "var(--flag)";
   els.big.textContent = nameFromIdx(targetIdx).replace("♯","#");
   const nearest = freqToIdx(f,a4);
@@ -407,7 +447,7 @@ function loop(){
   els.target.textContent = nameFromIdx(targetIdx);
 }
 
-function setStateText(text, kind){
+function setState(text, kind){
   els.state.textContent = text;
   els.state.className = "state" + (kind?(" "+kind):"");
 }
