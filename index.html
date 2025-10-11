@@ -5,95 +5,77 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <title>Ceol Gan Eagla — Tuner</title>
 <meta name="theme-color" content="#0b121a">
-<!-- © 2025 Gearóid MacUaid – Ceol Gan Eagla. Original code. -->
+<!-- © 2025 Gearóid MacUaid — Ceol Gan Eagla. Original code. -->
 <style>
 :root{
   --bg:#0b121a; --panel:#0f1824; --card:#101c2b; --ink:#eaf2ff; --muted:#9fb0c5;
   --accent:#27c26b; --warn:#ff4d4d; --line:#1a2a3f; --flag:#2e7d32;
 }
 *{box-sizing:border-box}
-html,body{height:100%; margin:0}
-body{background:var(--bg); color:var(--ink); font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif; overflow:hidden}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;overflow:hidden}
 
-/* Full-screen grid (no scroll) */
-.app{
-  height:100dvh; display:grid; gap:10px;
-  grid-template-rows: 54px 110px 1fr 38px; /* header, controls, stage, footer */
-  padding:10px; max-width:1200px; margin:0 auto;
-}
-header{display:flex; align-items:center; gap:10px; min-height:0}
-.logo{width:40px; height:40px; border-radius:10px; object-fit:cover; background:#0006}
-.title{font-weight:800; letter-spacing:.3px; font-size:20px}
-.badge{background:var(--card); border:1px solid var(--line); border-radius:999px; padding:5px 10px; font-size:12px; color:var(--muted)}
-.dot{width:10px; height:10px; border-radius:50%; background:#222}
-.dot.live{background:var(--warn); box-shadow:0 0 8px #ff4d4d88}
+/* Layout: one screen (no scroll) */
+.app{height:100dvh;display:grid;gap:10px;grid-template-rows:56px 118px 1fr 38px;padding:10px;max-width:1200px;margin:0 auto}
+header{display:flex;align-items:center;gap:10px}
+.logo{width:40px;height:40px;border-radius:10px;object-fit:cover;background:#0006}
+.title{font-weight:800;letter-spacing:.3px;font-size:20px;white-space:nowrap}
 
-/* Controls line – compact, wraps nicely */
-.controls{
-  display:grid; grid-template-columns: 1.1fr 1fr 1fr .9fr;
-  gap:8px; min-height:0;
+/* Irish flag pill */
+.flagIE{
+  width:34px;height:22px;border-radius:4px;border:1px solid #0006;
+  background:
+    linear-gradient(90deg,#169b62 0 33.333%,#ffffff 33.333% 66.666%,#ff883e 66.666% 100%);
+  box-shadow:0 0 0 1px #0002 inset;
 }
-.ctrl{
-  background:var(--panel); border:1px solid var(--line); border-radius:12px;
-  padding:6px 8px; display:flex; align-items:center; gap:8px; min-width:0; min-height:0;
-}
-label{font-size:11px; color:var(--muted)}
-select,input[type="number"]{
-  width:100%; min-width:0; background:var(--card); color:var(--ink);
-  border:1px solid var(--line); border-radius:10px; padding:8px 10px; font-size:14px
-}
-button{
-  appearance:none; border:none; cursor:pointer; white-space:nowrap;
-  background:linear-gradient(180deg,#1a283a,#0d1626); color:var(--ink);
-  border:1px solid var(--line); border-radius:12px; padding:10px 12px; font-weight:800;
-}
+
+.badge{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:12px;color:var(--muted)}
+.dot{width:10px;height:10px;border-radius:50%;background:#222}
+.dot.live{background:var(--warn);box-shadow:0 0 8px #ff4d4d88}
+
+/* Controls row (compact, wraps) */
+.controls{display:grid;grid-template-columns:1.1fr 1fr 1fr .9fr;gap:8px}
+.ctrl{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 8px;display:flex;align-items:center;gap:8px;min-width:0}
+label{font-size:11px;color:var(--muted)}
+select,input[type="number"]{width:100%;min-width:0;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:14px}
+button{appearance:none;border:none;cursor:pointer;white-space:nowrap;background:linear-gradient(180deg,#1a283a,#0d1626);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-weight:800}
 button:active{transform:translateY(1px)}
 .btnStop{background:linear-gradient(180deg,#3a1d1d,#24110e)}
 
-.meterCard{
-  background:var(--panel); border:1px solid var(--line); border-radius:16px;
-  padding:8px; display:grid; grid-template-rows: 24px 1fr 72px 28px; gap:6px; min-height:0
-}
-.row{display:flex; align-items:center; justify-content:space-between; gap:8px; min-height:0}
-.rmsbar{width:120px; height:8px; background:#223448; border:1px solid var(--line); border-radius:999px; overflow:hidden}
-.rmsbar>i{display:block; height:100%; width:0; background:#61d6ff}
-.warnBadge{color:#fff; background:var(--warn); padding:4px 8px; border-radius:999px; font-size:12px; border:1px solid #0003}
-.meter{position:relative; min-height:0; height:100%; border-radius:12px; overflow:hidden; background:linear-gradient(180deg,#0f1726,#0c1420); border:1px solid var(--line)}
-canvas#g{width:100%; height:100%}
-.bigNote{
-  background:var(--flag); color:#0b121a; font-weight:900;
-  font-size:clamp(42px, 12vw, 70px); text-align:center; border-radius:12px; line-height:1;
-  display:flex; align-items:center; justify-content:center;
-}
-.stats{display:flex; align-items:center; justify-content:center; gap:10px}
-.pill{background:var(--card); border:1px solid var(--line); border-radius:999px; padding:6px 10px; font-weight:800; min-width:90px; text-align:center}
+/* Stage */
+.meterCard{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:8px;display:grid;grid-template-rows:26px 1fr 72px 28px;gap:6px;min-height:0}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.rmsbar{width:120px;height:8px;background:#223448;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.rmsbar>i{display:block;height:100%;width:0;background:#61d6ff}
+.warnBadge{color:#fff;background:var(--warn);padding:4px 8px;border-radius:999px;font-size:12px;border:1px solid #0003}
+.meter{position:relative;min-height:0;height:100%;border-radius:12px;overflow:hidden;background:linear-gradient(180deg,#0f1726,#0c1420);border:1px solid var(--line)}
+canvas#g{width:100%;height:100%}
+.bigNote{background:var(--flag);color:#0b121a;font-weight:900;font-size:clamp(42px,12vw,70px);text-align:center;border-radius:12px;line-height:1;display:flex;align-items:center;justify-content:center}
+.stats{display:flex;align-items:center;justify-content:center;gap:10px}
+.pill{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-weight:800;min-width:90px;text-align:center}
 
-footer{display:flex; align-items:center; justify-content:space-between; gap:8px; color:var(--muted); font-size:12px}
+footer{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--muted);font-size:12px}
 
-/* Mobile/tablet */
-@media (max-width:900px){
-  .controls{grid-template-columns: 1fr 1fr; grid-auto-rows: minmax(48px,auto)}
-  .app{grid-template-rows: 54px 160px 1fr 38px}
-}
-@media (max-width:520px){
-  .title{font-size:18px}
-}
+/* Responsive */
+@media (max-width:900px){.controls{grid-template-columns:1fr 1fr;grid-auto-rows:minmax(48px,auto)}.app{grid-template-rows:56px 160px 1fr 38px}}
+@media (max-width:520px){.title{font-size:18px}}
 </style>
 </head>
 <body>
 <div class="app">
   <header>
+    <span class="flagIE" title="Éire"></span>
     <img class="logo" src="icons/icon-192.png" alt="Ceol Gan Eagla">
     <div class="title">Ceol Gan Eagla — Tuner</div>
-    <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+    <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
       <span class="badge">Mic: <span id="micState">OFF</span></span>
       <div id="dot" class="dot" aria-hidden="true"></div>
     </div>
   </header>
 
-  <!-- Compact controls bar -->
+  <!-- Controls -->
   <div class="controls">
-    <div class="ctrl" title="Instrument & tuning">
+    <div class="ctrl">
       <div style="flex:1;min-width:0">
         <label for="inst">Instrument &amp; Tuning</label>
         <select id="inst"></select>
@@ -104,13 +86,10 @@ footer{display:flex; align-items:center; justify-content:space-between; gap:8px;
       </div>
     </div>
 
-    <div class="ctrl" title="Reference">
+    <div class="ctrl">
       <div style="flex:1">
         <label for="a4">A4 (Hz)</label>
-        <select id="a4">
-          <option>436</option><option>438</option><option>439</option>
-          <option selected>440</option><option>441</option><option>442</option><option>444</option>
-        </select>
+        <select id="a4"><option>436</option><option>438</option><option>439</option><option selected>440</option><option>441</option><option>442</option><option>444</option></select>
       </div>
       <div style="flex:1">
         <label for="gate">Gate</label>
@@ -123,28 +102,25 @@ footer{display:flex; align-items:center; justify-content:space-between; gap:8px;
       </div>
     </div>
 
-    <div class="ctrl" title="Metronome">
+    <div class="ctrl">
       <div style="flex:1">
         <label for="bpm">BPM</label>
         <input id="bpm" type="number" min="20" max="240" value="120">
       </div>
       <div style="flex:1">
         <label for="sig">Time Signature</label>
-        <select id="sig">
-          <option>2/4</option><option>3/4</option><option selected>4/4</option>
-          <option>6/8</option><option>9/8</option><option>12/8</option>
-        </select>
+        <select id="sig"><option>2/4</option><option>3/4</option><option selected>4/4</option><option>6/8</option><option>9/8</option><option>12/8</option></select>
       </div>
-      <button id="metroBtn" style="min-width:120px">Start</button>
+      <button id="metroBtn" style="min-width:110px">Start</button>
     </div>
 
-    <div class="ctrl" title="Microphone">
+    <div class="ctrl">
       <button id="micBtn" style="flex:1">Start Mic</button>
       <button id="stopAll" class="btnStop" style="flex:1">Stop All</button>
     </div>
   </div>
 
-  <!-- Stage (fills remaining height) -->
+  <!-- Stage -->
   <section class="meterCard">
     <div class="row">
       <span class="badge">A4=<span id="a4v">440</span>Hz</span>
@@ -169,7 +145,7 @@ footer{display:flex; align-items:center; justify-content:space-between; gap:8px;
 </div>
 
 <script>
-/* ===== Helpers & music math ===== */
+/* ===== Music math ===== */
 const N=["C","C♯","D","E♭","E","F","F♯","G","A♭","A","B♭","B"], A4I=9+12*4;
 const idxToFreq=(i,a4)=>a4*Math.pow(2,(i-A4I)/12);
 const freqToIdx=(f,a4)=>Math.round(12*Math.log2(f/a4)+A4I);
@@ -220,106 +196,91 @@ refreshStrings();
 els.inst.addEventListener("change", refreshStrings);
 els.a4.addEventListener("change", ()=> els.a4v.textContent=els.a4.value);
 
-/* ===== Responsive canvas (crisp) ===== */
-const ctx = $('#g').getContext('2d');
+/* ===== Crisp canvas (Hi-DPI) ===== */
+const ctx = els.g.getContext('2d');
+let cssW=0, cssH=0;
 function resizeCanvas(){
   const dpr = Math.max(1, window.devicePixelRatio || 1);
-  const rect = els.g.getBoundingClientRect();
-  els.g.width = Math.round(rect.width * dpr);
-  els.g.height = Math.round(rect.height * dpr);
+  const r = els.g.getBoundingClientRect();
+  cssW = r.width; cssH = r.height;
+  els.g.width  = Math.round(cssW * dpr);
+  els.g.height = Math.round(cssH * dpr);
   ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
   drawGaugeBase(); drawNeedle(false);
 }
 window.addEventListener('resize', resizeCanvas);
 
-/* ===== Gauge drawing (needle fixed to standard) ===== */
+/* ===== Gauge (smooth; RIGHT=sharp, LEFT=flat) ===== */
 let dispAngle=0, targAngle=0, easing=0.15, inTune=false;
 function drawGaugeBase(){
-  const w=els.g.width, h=els.g.height, cx=w/(window.devicePixelRatio||1)/2, cy=h/(window.devicePixelRatio||1)*0.86, r=h/(window.devicePixelRatio||1)*0.80;
-  ctx.clearRect(0,0,w,h);
+  const cx=cssW/2, cy=cssH*0.86, r=cssH*0.80;
+  ctx.clearRect(0,0,cssW,cssH);
   ctx.save(); ctx.translate(cx,cy);
   for(let i=-50;i<=50;i++){
     const ang=(-90+i*1.8)*Math.PI/180, L=(i%10===0)?22:(i%5===0?12:6);
     ctx.strokeStyle="#294058"; ctx.lineWidth=4; ctx.beginPath();
     ctx.moveTo(r*Math.cos(ang), r*Math.sin(ang));
-    ctx.lineTo((r-L)*Math.cos(ang), (r-L)*Math.sin(ang));
-    ctx.stroke();
+    ctx.lineTo((r-L)*Math.cos(ang), (r-L)*Math.sin(ang)); ctx.stroke();
     if(i%10===0 && i!==0){
       ctx.fillStyle="#6181a0"; ctx.font="18px system-ui"; ctx.textAlign="center"; ctx.textBaseline="middle";
-      const tx=(r-38)*Math.cos(ang), ty=(r-38)*Math.sin(ang);
-      ctx.fillText(Math.abs(i), tx, ty);
+      const tx=(r-38)*Math.cos(ang), ty=(r-38)*Math.sin(ang); ctx.fillText(Math.abs(i), tx, ty);
     }
   }
-  // arc + in-tune zone
   ctx.beginPath(); ctx.strokeStyle="#213248"; ctx.lineWidth=10; ctx.arc(0,0,r-44,-Math.PI,0); ctx.stroke();
   ctx.beginPath(); ctx.strokeStyle="#2f9e60"; ctx.lineWidth=14; const ok=6*Math.PI/180; ctx.arc(0,0,r-44,-ok,ok); ctx.stroke();
   ctx.restore();
 }
 function drawNeedle(ok){
-  const w=els.g.width, h=els.g.height, px=h/(window.devicePixelRatio||1);
-  const cx=w/(window.devicePixelRatio||1)/2, cy=px*0.86, r=px*0.80;
+  const cx=cssW/2, cy=cssH*0.86, r=cssH*0.80;
   ctx.save(); ctx.translate(cx,cy);
-  // **Dial direction fix**: RIGHT for sharp (+¢), LEFT for flat (–¢)
-  const ang=(-90 + dispAngle) * Math.PI/180;
+  // Direction fix: +cents => +angle => clockwise => RIGHT
+  const ang = (-90 + dispAngle) * Math.PI/180;
   ctx.rotate(ang);
   ctx.strokeStyle=ok?"#2ce07c":"#eaeaea"; ctx.fillStyle=ok?"#2ce07c":"#eaeaea";
   ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-r+56); ctx.stroke();
-  ctx.beginPath(); ctx.arc(0,0,18,0,Math.PI*2); ctx.fill();
-  ctx.restore();
+  ctx.beginPath(); ctx.arc(0,0,18,0,Math.PI*2); ctx.fill(); ctx.restore();
 }
-function animateDial(){
-  dispAngle += (targAngle - dispAngle) * easing;
-  drawGaugeBase(); drawNeedle(inTune);
-  requestAnimationFrame(animateDial);
-}
+function animateDial(){ dispAngle += (targAngle - dispAngle) * easing; drawGaugeBase(); drawNeedle(inTune); requestAnimationFrame(animateDial); }
 resizeCanvas(); animateDial();
 
-/* ===== Audio (robust) ===== */
+/* ===== Audio ===== */
 let AC, micNode, analyser, buf, rafId;
 let smoothCents = 0; const centsAlpha = 0.25;
 
-function ensureAC(){
-  if(!AC) AC = new (window.AudioContext||window.webkitAudioContext)({latencyHint:"interactive"});
-  if(AC.state==="suspended") AC.resume();
-  return AC;
-}
-document.addEventListener("visibilitychange", ()=>{ if(AC && AC.state==="suspended") AC.resume(); });
+function ensureAC(){ if(!AC) AC = new (window.AudioContext||window.webkitAudioContext)({latencyHint:"interactive"}); if(AC.state==="suspended") AC.resume(); return AC; }
+document.addEventListener("visibilitychange",()=>{ if(AC && AC.state==="suspended") AC.resume(); });
 
 async function startMic(){
   try{
     ensureAC();
-    // Unlock WebAudio on iOS
-    const click=AC.createBufferSource(); click.buffer=AC.createBuffer(1,1,AC.sampleRate); click.connect(AC.destination); click.start(); click.stop();
+    // iOS unlock
+    const s=AC.createBufferSource(); s.buffer=AC.createBuffer(1,1,AC.sampleRate); s.connect(AC.destination); s.start(); s.stop();
     const stream = await navigator.mediaDevices.getUserMedia({audio:true});
     micNode = AC.createMediaStreamSource(stream);
-    analyser = AC.createAnalyser();
-    analyser.fftSize = 2048;
-    analyser.smoothingTimeConstant = 0.85;
+    analyser = AC.createAnalyser(); analyser.fftSize=2048; analyser.smoothingTimeConstant=0.85;
     buf = new Float32Array(analyser.fftSize);
     micNode.connect(analyser);
     els.micState.textContent="ON"; els.dot.classList.add('live'); els.micBtn.textContent="Stop Mic"; els.noInput.style.display="none";
     loop();
-  }catch(e){
-    alert("Mic error: " + e.message + "\n• Use HTTPS\n• Allow microphone permission\n• Close other apps using the mic");
-  }
+  }catch(e){ alert("Mic error: "+e.message+"\n• Use HTTPS\n• Allow mic permission\n• Close other apps using the mic"); }
 }
 function stopMic(){
   if(rafId) cancelAnimationFrame(rafId), rafId=null;
   if(micNode && micNode.mediaStream){ micNode.mediaStream.getTracks().forEach(t=>t.stop()); }
   micNode=null; analyser=null; buf=null;
   els.micState.textContent="OFF"; els.dot.classList.remove('live'); els.micBtn.textContent="Start Mic";
-  targAngle = 0; inTune=false; els.big.textContent="—";
+  targAngle=0; inTune=false; els.big.textContent="—";
 }
 
 function yin(b,sr){
   const thr=0.15, tauMax=Math.floor(sr/50), tauMin=Math.floor(sr/1000), N=b.length;
-  const diff=new Float32Array(tauMax), cmnd=new Float32Array(tauMax); cmnd[0]=1;
+  const diff=new Float32Array(tauMax), cm=new Float32Array(tauMax); cm[0]=1;
   for(let t=tauMin;t<tauMax;t++){ let s=0; for(let i=0;i<N-t;i++){ const d=b[i]-b[i+t]; s+=d*d } diff[t]=s }
-  let run=0,best=1e9,bt=-1;
-  for(let t=tauMin;t<tauMax;t++){ run+=diff[t]; cmnd[t]=diff[t]*t/run; if(t>tauMin && cmnd[t]<thr && cmnd[t]<best){ best=cmnd[t]; bt=t; } }
+  let run=0, best=1e9, bt=-1;
+  for(let t=tauMin;t<tauMax;t++){ run+=diff[t]; cm[t]=diff[t]*t/run; if(t>tauMin && cm[t]<thr && cm[t]<best){ best=cm[t]; bt=t; } }
   if(bt<0) return null;
-  const x0=Math.max(1,bt-1), x2=Math.min(cmnd.length-1,bt+1);
-  const s0=cmnd[x0], s1=cmnd[bt], s2=cmnd[x2];
+  const x0=Math.max(1,bt-1), x2=Math.min(cm.length-1,bt+1);
+  const s0=cm[x0], s1=cm[bt], s2=cm[x2];
   const tau=bt + (s2 - s0)/(2*(2*s1 - s2 - s0));
   return sr/tau;
 }
@@ -330,7 +291,7 @@ function loop(){
 
   analyser.getFloatTimeDomainData(buf);
 
-  // Input checks
+  // level checks
   let sumAbs=0; for(let i=0;i<buf.length;i++) sumAbs += Math.abs(buf[i]);
   const silent = sumAbs/buf.length < 1e-5;
 
@@ -342,22 +303,26 @@ function loop(){
   const gate=parseFloat(els.gate.value);
   if(rms<gate || silent){ inTune=false; targAngle += (0 - targAngle)*0.1; return; }
 
-  const sr = AC.sampleRate || 48000;
+  const sr=AC.sampleRate||48000;
   const f = yin(buf, sr);
   if(!f || f<45 || f>1500){ inTune=false; targAngle += (0 - targAngle)*0.1; return; }
 
-  const a4 = +els.a4.value;
-  const nearest = freqToIdx(f, a4);
+  const a4=+els.a4.value;
+  const nearest = freqToIdx(f,a4);
   const targetIdx = els.string.disabled || !els.string.value ? nearest : +els.string.value;
   const targetHz = idxToFreq(targetIdx, a4);
   const dc = centsOff(f, targetHz);
 
-  // Smooth cents for relaxed dial
+  // smooth cents for relaxed dial
   smoothCents += (dc - smoothCents) * centsAlpha;
   const lim = Math.max(-50, Math.min(50, smoothCents));
 
-  // DIAL DIRECTION FIX: positive cents (sharp) => right
-  targAngle = lim * 1.8; // DO NOT negate (right = sharp)
+  /* FINAL DIRECTION FIX:
+     +cents (sharp) => RIGHT => +angle
+     -cents (flat)  => LEFT  => -angle
+     If your device shows opposite, flip sign here.
+  */
+  targAngle = lim * 1.8;
 
   inTune = Math.abs(dc) < 6;
   els.big.style.background = inTune ? "var(--accent)" : "var(--flag)";
@@ -368,14 +333,9 @@ function loop(){
   els.target.textContent = nameFromIdx(targetIdx);
 }
 
-/* Buttons */
-els.micBtn.addEventListener("click", ()=>{ if(!micNode) startMic(); else stopMic(); });
-els.stopAll.addEventListener("click", ()=>{ stopMic(); metro?.stop?.(); els.metroBtn.textContent="Start"; });
-els.a4.addEventListener("change", ()=> els.a4v.textContent=els.a4.value);
-
 /* Metronome */
 class Metro{
-  constructor(ac){ this.ac=ac; this.timer=null; this.next=0; this.bpm=120; this.p=[1,0,0,0]; }
+  constructor(ac){ this.ac=ac; this.t=null; this.next=0; this.bpm=120; this.p=[1,0,0,0]; }
   set(bpm,sig){ this.bpm=Math.max(20,Math.min(240,bpm)); this.p=this.sig(sig); }
   sig(s){ const [t,b]=s.split("/").map(Number); return b===8?Array.from({length:t},(_,i)=>i%3===0):Array.from({length:t},(_,i)=>i===0); }
   click(acc){
@@ -384,22 +344,22 @@ class Metro{
     g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(acc?0.7:0.45,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+0.12);
     o.connect(g).connect(this.ac.destination); o.start(t); o.stop(t+0.15);
   }
-  start(bpm,sig){
-    this.set(bpm,sig); if(this.timer) return; if(!AC) ensureAC(); if(AC.state==="suspended") AC.resume();
-    this.next=AC.currentTime; let i=0;
-    const loop=()=>{ const spb=60/this.bpm;
-      while(this.next < AC.currentTime+0.1){ this.click(!!this.p[i%this.p.length]); i++; this.next+=spb; }
-      this.timer=setTimeout(loop,25);
+  start(bpm,sig){ this.set(bpm,sig); if(this.t) return; if(!AC) ensureAC(); if(AC.state==="suspended") AC.resume();
+    this.next=AC.currentTime; let i=0; const loop=()=>{ const spb=60/this.bpm;
+      while(this.next<AC.currentTime+0.1){ this.click(!!this.p[i%this.p.length]); i++; this.next+=spb; }
+      this.t=setTimeout(loop,25);
     }; loop();
   }
-  stop(){ if(this.timer) clearTimeout(this.timer), this.timer=null; }
+  stop(){ if(this.t){ clearTimeout(this.t); this.t=null; } }
 }
 let metro=null;
-els.metroBtn.addEventListener("click", ()=>{
-  if(!metro){ ensureAC(); metro=new Metro(AC); }
+els.metroBtn.addEventListener("click", ()=>{ if(!metro){ ensureAC(); metro=new Metro(AC); }
   if(els.metroBtn.textContent==="Start"){ metro.start(+els.bpm.value||120, els.sig.value); els.metroBtn.textContent="Stop"; }
-  else { metro.stop(); els.metroBtn.textContent="Start"; }
-});
+  else { metro.stop(); els.metroBtn.textContent="Start"; } });
+
+/* Buttons */
+els.micBtn.addEventListener("click", ()=>{ if(!micNode) startMic(); else stopMic(); });
+els.stopAll.addEventListener("click", ()=>{ stopMic(); metro?.stop?.(); els.metroBtn.textContent="Start"; });
 
 /* Init */
 refreshStrings(); resizeCanvas();
