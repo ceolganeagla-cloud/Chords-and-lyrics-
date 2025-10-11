@@ -14,6 +14,20 @@ const ASSETS = [
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)));
 });
+{
+  "name": "Ceol Gan Eagla — Tuner",
+  "short_name": "CGE Tuner",
+  "start_url": "/Chords-and-lyrics-/",
+  "scope": "/Chords-and-lyrics-/",
+  "display": "standalone",
+  "background_color": "#0b121a",
+  "theme_color": "#0b121a",
+  "icons": [
+    {"src": "icon-32.png",  "sizes": "32x32",  "type": "image/png"},
+    {"src": "icon-192.png", "sizes": "192x192","type": "image/png"},
+    {"src": "icon-512.png", "sizes": "512x512","type": "image/png"}
+  ]
+}
 
 self.addEventListener("activate", (e) => {
   e.waitUntil(
