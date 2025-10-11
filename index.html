@@ -322,7 +322,8 @@ function loop(){
      -cents (flat)  => LEFT  => -angle
      If your device shows opposite, flip sign here.
   */
-  targAngle = lim * 1.8;
+  targAngle = -lim * 1.8;
+
 
   inTune = Math.abs(dc) < 6;
   els.big.style.background = inTune ? "var(--accent)" : "var(--flag)";
