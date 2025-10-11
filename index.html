@@ -10,6 +10,7 @@
 :root{
   --bg:#0b121a; --panel:#0f1824; --card:#101c2b; --ink:#eaf2ff; --muted:#9fb0c5;
   --accent:#27c26b; --warn:#ff4d4d; --line:#1a2a3f; --flag:#2e7d32;
+  --gold:#f0c75e; --faceTop:#122237; --faceBot:#0b1526;
 }
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
@@ -20,20 +21,12 @@ body{background:var(--bg);color:var(--ink);font-family:system-ui,Segoe UI,Roboto
 header{display:flex;align-items:center;gap:10px}
 .logo{width:40px;height:40px;border-radius:10px;object-fit:cover;background:#0006}
 .title{font-weight:800;letter-spacing:.3px;font-size:20px;white-space:nowrap}
-
-/* Irish flag pill */
-.flagIE{
-  width:34px;height:22px;border-radius:4px;border:1px solid #0006;
-  background:
-    linear-gradient(90deg,#169b62 0 33.333%,#ffffff 33.333% 66.666%,#ff883e 66.666% 100%);
-  box-shadow:0 0 0 1px #0002 inset;
-}
-
+.flagIE{width:34px;height:22px;border-radius:4px;border:1px solid #0006;background:linear-gradient(90deg,#169b62 0 33.333%,#ffffff 33.333% 66.666%,#ff883e 66.666% 100%);box-shadow:0 0 0 1px #0002 inset}
 .badge{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:12px;color:var(--muted)}
 .dot{width:10px;height:10px;border-radius:50%;background:#222}
 .dot.live{background:var(--warn);box-shadow:0 0 8px #ff4d4d88}
 
-/* Controls row (compact, wraps) */
+/* Controls */
 .controls{display:grid;grid-template-columns:1.1fr 1fr 1fr .9fr;gap:8px}
 .ctrl{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 8px;display:flex;align-items:center;gap:8px;min-width:0}
 label{font-size:11px;color:var(--muted)}
@@ -43,17 +36,23 @@ button:active{transform:translateY(1px)}
 .btnStop{background:linear-gradient(180deg,#3a1d1d,#24110e)}
 
 /* Stage */
-.meterCard{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:8px;display:grid;grid-template-rows:26px 1fr 72px 28px;gap:6px;min-height:0}
+.meterCard{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:8px;display:grid;grid-template-rows:26px 1fr 84px 28px;gap:6px;min-height:0}
 .row{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .rmsbar{width:120px;height:8px;background:#223448;border:1px solid var(--line);border-radius:999px;overflow:hidden}
 .rmsbar>i{display:block;height:100%;width:0;background:#61d6ff}
 .warnBadge{color:#fff;background:var(--warn);padding:4px 8px;border-radius:999px;font-size:12px;border:1px solid #0003}
-.meter{position:relative;min-height:0;height:100%;border-radius:12px;overflow:hidden;background:linear-gradient(180deg,#0f1726,#0c1420);border:1px solid var(--line)}
+.status{font-weight:900;padding:6px 10px;border-radius:999px;border:1px solid var(--line)}
+.status.low{background:#162436;color:#7ec8ff}
+.status.high{background:#2a1616;color:#ff8e8e}
+.status.ok{background:#173222;color:#9ff0c1;border-color:#2b5e45}
+
+.meter{position:relative;min-height:0;height:100%;border-radius:14px;overflow:hidden;border:1px solid #0a1220;box-shadow:inset 0 8px 30px #0009, 0 8px 18px #0006}
 canvas#g{width:100%;height:100%}
 .bigNote{background:var(--flag);color:#0b121a;font-weight:900;font-size:clamp(42px,12vw,70px);text-align:center;border-radius:12px;line-height:1;display:flex;align-items:center;justify-content:center}
-.stats{display:flex;align-items:center;justify-content:center;gap:10px}
-.pill{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-weight:800;min-width:90px;text-align:center}
+.stats{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
+.pill{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-weight:800;min-width:100px;text-align:center}
 
+/* Footer */
 footer{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--muted);font-size:12px}
 
 /* Responsive */
@@ -126,6 +125,8 @@ footer{display:flex;align-items:center;justify-content:space-between;gap:8px;col
       <span class="badge">A4=<span id="a4v">440</span>Hz</span>
       <span class="badge">RMS: <span id="rms">0.000</span></span>
       <div class="rmsbar" title="Live mic level"><i id="rmsFill"></i></div>
+      <span id="detected" class="badge">Detected: —</span>
+      <span id="status" class="status">—</span>
       <span id="noInput" class="warnBadge" style="display:none">No input</span>
     </div>
     <div class="meter"><canvas id="g"></canvas></div>
@@ -145,9 +146,10 @@ footer{display:flex;align-items:center;justify-content:space-between;gap:8px;col
 </div>
 
 <script>
-// Force dial direction: +1 = current, -1 = flipped (RIGHT when sharp)
+/* ===== CONFIG ===== */
+// +1 keeps previous mapping; -1 flips it. You set this earlier, leaving here for control.
 const DIRECTION = -1;
-  
+
 /* ===== Music math ===== */
 const N=["C","C♯","D","E♭","E","F","F♯","G","A♭","A","B♭","B"], A4I=9+12*4;
 const idxToFreq=(i,a4)=>a4*Math.pow(2,(i-A4I)/12);
@@ -160,7 +162,8 @@ const els={inst:$("#inst"), string:$("#string"), a4:$("#a4"), a4v:$("#a4v"),
   micState:$("#micState"), g:$("#g"), big:$("#big"), note:$("#note"),
   freq:$("#freq"), cents:$("#cents"), target:$("#target"),
   rms:$("#rms"), rmsFill:$("#rmsFill"), noInput:$("#noInput"),
-  bpm:$("#bpm"), sig:$("#sig"), metroBtn:$("#metroBtn")};
+  bpm:$("#bpm"), sig:$("#sig"), metroBtn:$("#metroBtn"),
+  detected:$("#detected"), status:$("#status")};
 document.getElementById("y").textContent=new Date().getFullYear();
 els.a4v.textContent=els.a4.value;
 
@@ -203,7 +206,6 @@ els.a4.addEventListener("change", ()=> els.a4v.textContent=els.a4.value);
 const ctx = els.g.getContext('2d');
 ctx.imageSmoothingEnabled = true;
 ctx.imageSmoothingQuality = 'high';
-  
 let cssW=0, cssH=0;
 function resizeCanvas(){
   const dpr = Math.max(1, window.devicePixelRatio || 1);
@@ -216,42 +218,73 @@ function resizeCanvas(){
 }
 window.addEventListener('resize', resizeCanvas);
 
-/* ===== Gauge (smooth; RIGHT=sharp, LEFT=flat) ===== */
-let dispAngle=0, targAngle=0, easing=0.15, inTune=false;
+/* ===== Pro dial drawing ===== */
+let dispAngle=0, targAngle=0, easing=0.14, inTune=false;
 function drawGaugeBase(){
   const cx=cssW/2, cy=cssH*0.86, r=cssH*0.80;
   ctx.clearRect(0,0,cssW,cssH);
+
+  // Face gradient
+  const grad = ctx.createLinearGradient(0, cy-r, 0, cy);
+  grad.addColorStop(0, '#132236'); grad.addColorStop(1, '#0c1526');
+  ctx.fillStyle = grad;
+  ctx.beginPath(); ctx.arc(cx,cy,r,Math.PI,0); ctx.lineTo(cx,cy); ctx.closePath(); ctx.fill();
+
   ctx.save(); ctx.translate(cx,cy);
+
+  // Fine ticks
   for(let i=-50;i<=50;i++){
-    const ang=(-90+i*1.8)*Math.PI/180, L=(i%10===0)?22:(i%5===0?12:6);
-    ctx.strokeStyle="#294058"; ctx.lineWidth=4; ctx.beginPath();
+    const ang=(-90+i*1.8)*Math.PI/180, L=(i%10===0)?24:(i%5===0?14:7);
+    ctx.strokeStyle = i===0 ? "#3bd08b" : "#2a4058";
+    ctx.lineWidth = i===0 ? 5 : 3;
+    ctx.beginPath();
     ctx.moveTo(r*Math.cos(ang), r*Math.sin(ang));
-    ctx.lineTo((r-L)*Math.cos(ang), (r-L)*Math.sin(ang)); ctx.stroke();
+    ctx.lineTo((r-L)*Math.cos(ang), (r-L)*Math.sin(ang));
+    ctx.stroke();
+
     if(i%10===0 && i!==0){
-      ctx.fillStyle="#6181a0"; ctx.font="18px system-ui"; ctx.textAlign="center"; ctx.textBaseline="middle";
-      const tx=(r-38)*Math.cos(ang), ty=(r-38)*Math.sin(ang); ctx.fillText(Math.abs(i), tx, ty);
+      ctx.fillStyle="#85a4c3"; ctx.font="18px system-ui"; ctx.textAlign="center"; ctx.textBaseline="middle";
+      const tx=(r-44)*Math.cos(ang), ty=(r-44)*Math.sin(ang); ctx.fillText(Math.abs(i), tx, ty);
     }
   }
-  ctx.beginPath(); ctx.strokeStyle="#213248"; ctx.lineWidth=10; ctx.arc(0,0,r-44,-Math.PI,0); ctx.stroke();
-  ctx.beginPath(); ctx.strokeStyle="#2f9e60"; ctx.lineWidth=14; const ok=6*Math.PI/180; ctx.arc(0,0,r-44,-ok,ok); ctx.stroke();
+
+  // In-tune glow
+  ctx.beginPath(); ctx.strokeStyle="#2fe17d"; ctx.lineWidth=14; const ok=6*Math.PI/180; ctx.arc(0,0,r-46,-ok,ok); ctx.stroke();
+
+  // Inner shadow rim
+  ctx.beginPath(); ctx.strokeStyle="#0a1220"; ctx.lineWidth=10; ctx.arc(0,0,r-40,-Math.PI,0); ctx.stroke();
+
   ctx.restore();
 }
 function drawNeedle(ok){
   const cx=cssW/2, cy=cssH*0.86, r=cssH*0.80;
   ctx.save(); ctx.translate(cx,cy);
-  // Direction fix: +cents => +angle => clockwise => RIGHT
   const ang = (-90 + dispAngle) * Math.PI/180;
   ctx.rotate(ang);
-  ctx.strokeStyle=ok?"#2ce07c":"#eaeaea"; ctx.fillStyle=ok?"#2ce07c":"#eaeaea";
-  ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-r+56); ctx.stroke();
-  ctx.beginPath(); ctx.arc(0,0,18,0,Math.PI*2); ctx.fill(); ctx.restore();
+
+  // Needle body with subtle gradient
+  const g = ctx.createLinearGradient(0,-r,0,0);
+  g.addColorStop(0, ok ? "#8ef3c4" : "#eaeaea");
+  g.addColorStop(1, ok ? "#2ce07c" : "#bfc7d2");
+  ctx.strokeStyle=g; ctx.lineWidth=5; ctx.lineCap="round";
+  ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-r+58); ctx.stroke();
+
+  // Center hub (metallic)
+  const hubR = 20;
+  const m = ctx.createRadialGradient(0,0,4, 0,0,hubR);
+  m.addColorStop(0,"#f7f7f7"); m.addColorStop(0.5,"#d0d6df"); m.addColorStop(1,"#8b96a8");
+  ctx.fillStyle=m; ctx.beginPath(); ctx.arc(0,0,hubR,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle="#1b2a3d"; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(0,0,hubR,0,Math.PI*2); ctx.stroke();
+
+  ctx.restore();
 }
 function animateDial(){ dispAngle += (targAngle - dispAngle) * easing; drawGaugeBase(); drawNeedle(inTune); requestAnimationFrame(animateDial); }
 resizeCanvas(); animateDial();
 
-/* ===== Audio ===== */
+/* ===== Audio / Pitch (robust + auto-string detect) ===== */
 let AC, micNode, analyser, buf, rafId;
 let smoothCents = 0; const centsAlpha = 0.25;
+let detectHoldIdx = null, detectHoldFrames = 0;
 
 function ensureAC(){ if(!AC) AC = new (window.AudioContext||window.webkitAudioContext)({latencyHint:"interactive"}); if(AC.state==="suspended") AC.resume(); return AC; }
 document.addEventListener("visibilitychange",()=>{ if(AC && AC.state==="suspended") AC.resume(); });
@@ -275,7 +308,8 @@ function stopMic(){
   if(micNode && micNode.mediaStream){ micNode.mediaStream.getTracks().forEach(t=>t.stop()); }
   micNode=null; analyser=null; buf=null;
   els.micState.textContent="OFF"; els.dot.classList.remove('live'); els.micBtn.textContent="Start Mic";
-  targAngle=0; inTune=false; els.big.textContent="—";
+  targAngle=0; inTune=false; els.big.textContent="—"; setStatus("—", "");
+  els.detected.textContent = "Detected: —";
 }
 
 function yin(b,sr){
@@ -291,13 +325,26 @@ function yin(b,sr){
   return sr/tau;
 }
 
+function nearestStringIdx(freq,a4){
+  const set=TUNINGS[els.inst.value]||[];
+  if(!set.length) return null;
+  let bestIdx=null, bestCents=1e9;
+  for(let i=0;i<set.length;i++){
+    const idx=parseNote(set[i]);
+    const hz=idxToFreq(idx,a4);
+    const c=Math.abs(centsOff(freq,hz));
+    if(c<bestCents){ bestCents=c; bestIdx=idx; }
+  }
+  return {idx:bestIdx, cents:bestCents};
+}
+
 function loop(){
   rafId=requestAnimationFrame(loop);
   if(!analyser) return;
 
   analyser.getFloatTimeDomainData(buf);
 
-  // level checks
+  // level
   let sumAbs=0; for(let i=0;i<buf.length;i++) sumAbs += Math.abs(buf[i]);
   const silent = sumAbs/buf.length < 1e-5;
 
@@ -307,38 +354,69 @@ function loop(){
   els.noInput.style.display = silent ? "inline-block" : "none";
 
   const gate=parseFloat(els.gate.value);
-  if(rms<gate || silent){ inTune=false; targAngle += (0 - targAngle)*0.1; return; }
+  if(rms<gate || silent){ inTune=false; targAngle += (0 - targAngle)*0.12; setStatus("—",""); return; }
 
   const sr=AC.sampleRate||48000;
   const f = yin(buf, sr);
-  if(!f || f<45 || f>1500){ inTune=false; targAngle += (0 - targAngle)*0.1; return; }
+  if(!f || f<45 || f>1500){ inTune=false; targAngle += (0 - targAngle)*0.12; setStatus("—",""); return; }
 
   const a4=+els.a4.value;
-  const nearest = freqToIdx(f,a4);
-  const targetIdx = els.string.disabled || !els.string.value ? nearest : +els.string.value;
-  const targetHz = idxToFreq(targetIdx, a4);
-  const dc = centsOff(f, targetHz);
 
-  // smooth cents for relaxed dial
-  smoothCents += (dc - smoothCents) * centsAlpha;
+  // Auto-string detection against selected instrument (if available)
+  let currentTargetIdx;
+  const set=TUNINGS[els.inst.value]||[];
+  if(set.length){
+    const near = nearestStringIdx(f,a4);
+    if(near){
+      // require a few consecutive frames before switching the dropdown
+      if(detectHoldIdx===near.idx){ detectHoldFrames++; } else { detectHoldIdx=near.idx; detectHoldFrames=1; }
+      if(detectHoldFrames>=6){ // ~ stable ~
+        currentTargetIdx = near.idx;
+        // Update dropdown to the matched string
+        for(let i=0;i<els.string.options.length;i++){
+          if(+els.string.options[i].value===near.idx){ els.string.selectedIndex=i; break; }
+        }
+        els.detected.textContent = "Detected: " + els.string.options[els.string.selectedIndex].textContent;
+      }
+    }
+  }
+  // fallback: selected string or nearest chromatic
+  if(!currentTargetIdx){
+    currentTargetIdx = (els.string.disabled || !els.string.value)
+      ? freqToIdx(f,a4)
+      : +els.string.value;
+    if(els.string.disabled){
+      els.detected.textContent = "Detected: " + nameFromIdx(currentTargetIdx);
+    }
+  }
+
+  const currentTargetHz = idxToFreq(currentTargetIdx, a4);
+  const dc = centsOff(f, currentTargetHz);
+
+  // Smooth cents for relaxed dial
+  smoothCents += (dc - smoothCents) * 0.25;
   const lim = Math.max(-50, Math.min(50, smoothCents));
+  targAngle = DIRECTION * lim * 1.8;
 
-  /* FINAL DIRECTION FIX:
-     +cents (sharp) => RIGHT => +angle
-     -cents (flat)  => LEFT  => -angle
-     If your device shows opposite, flip sign here.
-  */
-  targAngle = DIRECTION * lim * 1.8;  // RIGHT = sharp, LEFT = flat
+  // Status + UI
+  const absC = Math.abs(dc);
+  if(absC <= 4){ inTune=true; setStatus("Perfect pitch","ok"); }
+  else if(dc < 0){ inTune=false; setStatus("Too low","low"); }
+  else { inTune=false; setStatus("Too high","high"); }
 
-
-
-  inTune = Math.abs(dc) < 6;
   els.big.style.background = inTune ? "var(--accent)" : "var(--flag)";
-  els.big.textContent = nameFromIdx(targetIdx).replace("♯","#");
+  els.big.textContent = nameFromIdx(currentTargetIdx).replace("♯","#");
+  const nearest = freqToIdx(f,a4);
   els.note.textContent = N[(nearest%12+12)%12];
   els.freq.textContent = f.toFixed(2);
   els.cents.textContent = (dc>0?"+":"")+dc.toFixed(0);
-  els.target.textContent = nameFromIdx(targetIdx);
+  els.target.textContent = nameFromIdx(currentTargetIdx);
+}
+
+/* Status helper */
+function setStatus(text, kind){
+  els.status.textContent = text;
+  els.status.className = "status" + (kind?(" "+kind):"");
 }
 
 /* Metronome */
@@ -361,16 +439,24 @@ class Metro{
   stop(){ if(this.t){ clearTimeout(this.t); this.t=null; } }
 }
 let metro=null;
+
+/* Buttons */
 els.metroBtn.addEventListener("click", ()=>{ if(!metro){ ensureAC(); metro=new Metro(AC); }
   if(els.metroBtn.textContent==="Start"){ metro.start(+els.bpm.value||120, els.sig.value); els.metroBtn.textContent="Stop"; }
   else { metro.stop(); els.metroBtn.textContent="Start"; } });
 
-/* Buttons */
 els.micBtn.addEventListener("click", ()=>{ if(!micNode) startMic(); else stopMic(); });
 els.stopAll.addEventListener("click", ()=>{ stopMic(); metro?.stop?.(); els.metroBtn.textContent="Start"; });
 
 /* Init */
 refreshStrings(); resizeCanvas();
+
+/* Utility for tunings parse used above */
+function parseNote(n){
+  const m=n.replace("♯","#").replace("♭","b").match(/^([A-Ga-g])([#b]?)(-?\d+)$/);
+  const map={C:0,"C#":1,"Db":1,D:2,"D#":3,"Eb":3,E:4,F:5,"F#":6,"Gb":6,G:7,"G#":8,"Ab":8,A:9,"A#":10,"Bb":10,B:11};
+  return map[m[1].toUpperCase()+(m[2]||"")] + 12*(parseInt(m[3],10)+1);
+}
 </script>
 </body>
 </html>
