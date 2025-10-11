@@ -5,18 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <title>Ceol Gan Eagla — Tuner</title>
 <meta name="theme-color" content="#0b121a">
-<!-- © 2025 Gearóid MacUaid — Ceol Gan Eagla. Original code. -->
 <style>
 :root{
   --bg:#0b121a; --panel:#0f1824; --card:#101c2b; --ink:#eaf2ff; --muted:#9fb0c5;
   --accent:#27c26b; --warn:#ff4d4d; --line:#1a2a3f; --flag:#2e7d32;
-  --gold:#f0c75e; --faceTop:#122237; --faceBot:#0b1526;
 }
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
 body{background:var(--bg);color:var(--ink);font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;overflow:hidden}
-
-/* Layout: one screen (no scroll) */
 .app{height:100dvh;display:grid;gap:10px;grid-template-rows:56px 118px 1fr 38px;padding:10px;max-width:1200px;margin:0 auto}
 header{display:flex;align-items:center;gap:10px}
 .logo{width:40px;height:40px;border-radius:10px;object-fit:cover;background:#0006}
@@ -26,7 +22,6 @@ header{display:flex;align-items:center;gap:10px}
 .dot{width:10px;height:10px;border-radius:50%;background:#222}
 .dot.live{background:var(--warn);box-shadow:0 0 8px #ff4d4d88}
 
-/* Controls */
 .controls{display:grid;grid-template-columns:1.1fr 1fr 1fr .9fr;gap:8px}
 .ctrl{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 8px;display:flex;align-items:center;gap:8px;min-width:0}
 label{font-size:11px;color:var(--muted)}
@@ -35,24 +30,34 @@ button{appearance:none;border:none;cursor:pointer;white-space:nowrap;background:
 button:active{transform:translateY(1px)}
 .btnStop{background:linear-gradient(180deg,#3a1d1d,#24110e)}
 
-/* Stage */
-.meterCard{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:8px;display:grid;grid-template-rows:26px 1fr 84px 28px;gap:6px;min-height:0}
+.meterCard{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:8px;display:grid;grid-template-rows:26px 1fr auto 28px;gap:8px;min-height:0}
 .row{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .rmsbar{width:120px;height:8px;background:#223448;border:1px solid var(--line);border-radius:999px;overflow:hidden}
 .rmsbar>i{display:block;height:100%;width:0;background:#61d6ff}
 .warnBadge{color:#fff;background:var(--warn);padding:4px 8px;border-radius:999px;font-size:12px;border:1px solid #0003}
-.status{font-weight:900;padding:6px 10px;border-radius:999px;border:1px solid var(--line)}
-.status.low{background:#162436;color:#7ec8ff}
-.status.high{background:#2a1616;color:#ff8e8e}
-.status.ok{background:#173222;color:#9ff0c1;border-color:#2b5e45}
 
-.meter{position:relative;min-height:0;height:100%;border-radius:14px;overflow:hidden;border:1px solid #0a1220;box-shadow:inset 0 8px 30px #0009, 0 8px 18px #0006}
+.meter{position:relative;min-height:0;height:100%;border-radius:14px;overflow:hidden;border:1px solid #0a1220;box-shadow:inset 0 8px 28px #0009, 0 8px 18px #0006}
 canvas#g{width:100%;height:100%}
-.bigNote{background:var(--flag);color:#0b121a;font-weight:900;font-size:clamp(42px,12vw,70px);text-align:center;border-radius:12px;line-height:1;display:flex;align-items:center;justify-content:center}
+
+/* Big status row under dial */
+.statusRow{
+  display:flex; gap:10px; justify-content:center; align-items:center; flex-wrap:wrap;
+}
+.bigNote{
+  background:var(--flag); color:#0b121a; font-weight:900;
+  font-size:clamp(38px, 11vw, 64px); text-align:center; border-radius:12px; line-height:1;
+  padding:10px 16px; min-width:220px;
+}
+.state{font-weight:900;padding:8px 14px;border-radius:999px;border:1px solid var(--line);font-size:14px}
+.state.low{background:#162436;color:#7ec8ff}
+.state.high{background:#2a1616;color:#ff8e8e}
+.state.ok{background:#123222;color:#aef5c9;border-color:#2b5e45;box-shadow:0 0 0 2px #2b5e4522, 0 0 20px 2px #2be07c33 inset}
+.state.ok::after{content:"  ✓"; font-weight:900}
+
+/* Small stats pills */
 .stats{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
 .pill{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-weight:800;min-width:100px;text-align:center}
 
-/* Footer */
 footer{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--muted);font-size:12px}
 
 /* Responsive */
@@ -126,11 +131,17 @@ footer{display:flex;align-items:center;justify-content:space-between;gap:8px;col
       <span class="badge">RMS: <span id="rms">0.000</span></span>
       <div class="rmsbar" title="Live mic level"><i id="rmsFill"></i></div>
       <span id="detected" class="badge">Detected: —</span>
-      <span id="status" class="status">—</span>
       <span id="noInput" class="warnBadge" style="display:none">No input</span>
     </div>
+
     <div class="meter"><canvas id="g"></canvas></div>
-    <div id="big" class="bigNote">—</div>
+
+    <!-- BIG STATUS: shows Perfect Pitch / Too Low / Too High -->
+    <div class="statusRow">
+      <div id="big" class="bigNote">—</div>
+      <div id="state" class="state">—</div>
+    </div>
+
     <div class="stats">
       <div class="pill">Note: <span id="note">—</span></div>
       <div class="pill">Freq: <span id="freq">—</span> Hz</div>
@@ -146,8 +157,7 @@ footer{display:flex;align-items:center;justify-content:space-between;gap:8px;col
 </div>
 
 <script>
-/* ===== CONFIG ===== */
-// +1 keeps previous mapping; -1 flips it. You set this earlier, leaving here for control.
+/* ===== DIRECTION (keep as -1 if that matched your device) ===== */
 const DIRECTION = -1;
 
 /* ===== Music math ===== */
@@ -162,8 +172,8 @@ const els={inst:$("#inst"), string:$("#string"), a4:$("#a4"), a4v:$("#a4v"),
   micState:$("#micState"), g:$("#g"), big:$("#big"), note:$("#note"),
   freq:$("#freq"), cents:$("#cents"), target:$("#target"),
   rms:$("#rms"), rmsFill:$("#rmsFill"), noInput:$("#noInput"),
-  bpm:$("#bpm"), sig:$("#sig"), metroBtn:$("#metroBtn"),
-  detected:$("#detected"), status:$("#status")};
+  bpm:$("#bpm"), sig:$("#sig"), metroBtn:$("#metroBtn"), detected:$("#detected"),
+  state:$("#state")};
 document.getElementById("y").textContent=new Date().getFullYear();
 els.a4v.textContent=els.a4.value;
 
@@ -213,12 +223,12 @@ function resizeCanvas(){
   cssW = r.width; cssH = r.height;
   els.g.width  = Math.round(cssW * dpr);
   els.g.height = Math.round(cssH * dpr);
-  ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
+  ctx.setTransform(dpr,0,0,dpr,0,0);
   drawGaugeBase(); drawNeedle(false);
 }
 window.addEventListener('resize', resizeCanvas);
 
-/* ===== Pro dial drawing ===== */
+/* ===== Dial ===== */
 let dispAngle=0, targAngle=0, easing=0.14, inTune=false;
 function drawGaugeBase(){
   const cx=cssW/2, cy=cssH*0.86, r=cssH*0.80;
@@ -231,29 +241,20 @@ function drawGaugeBase(){
   ctx.beginPath(); ctx.arc(cx,cy,r,Math.PI,0); ctx.lineTo(cx,cy); ctx.closePath(); ctx.fill();
 
   ctx.save(); ctx.translate(cx,cy);
-
-  // Fine ticks
   for(let i=-50;i<=50;i++){
     const ang=(-90+i*1.8)*Math.PI/180, L=(i%10===0)?24:(i%5===0?14:7);
     ctx.strokeStyle = i===0 ? "#3bd08b" : "#2a4058";
     ctx.lineWidth = i===0 ? 5 : 3;
     ctx.beginPath();
     ctx.moveTo(r*Math.cos(ang), r*Math.sin(ang));
-    ctx.lineTo((r-L)*Math.cos(ang), (r-L)*Math.sin(ang));
-    ctx.stroke();
-
+    ctx.lineTo((r-L)*Math.cos(ang), (r-L)*Math.sin(ang)); ctx.stroke();
     if(i%10===0 && i!==0){
       ctx.fillStyle="#85a4c3"; ctx.font="18px system-ui"; ctx.textAlign="center"; ctx.textBaseline="middle";
       const tx=(r-44)*Math.cos(ang), ty=(r-44)*Math.sin(ang); ctx.fillText(Math.abs(i), tx, ty);
     }
   }
-
-  // In-tune glow
+  // In-tune window
   ctx.beginPath(); ctx.strokeStyle="#2fe17d"; ctx.lineWidth=14; const ok=6*Math.PI/180; ctx.arc(0,0,r-46,-ok,ok); ctx.stroke();
-
-  // Inner shadow rim
-  ctx.beginPath(); ctx.strokeStyle="#0a1220"; ctx.lineWidth=10; ctx.arc(0,0,r-40,-Math.PI,0); ctx.stroke();
-
   ctx.restore();
 }
 function drawNeedle(ok){
@@ -261,30 +262,28 @@ function drawNeedle(ok){
   ctx.save(); ctx.translate(cx,cy);
   const ang = (-90 + dispAngle) * Math.PI/180;
   ctx.rotate(ang);
-
-  // Needle body with subtle gradient
   const g = ctx.createLinearGradient(0,-r,0,0);
-  g.addColorStop(0, ok ? "#8ef3c4" : "#eaeaea");
-  g.addColorStop(1, ok ? "#2ce07c" : "#bfc7d2");
+  g.addColorStop(0, ok ? "#8ef3c4" : "#eaeaea"); g.addColorStop(1, ok ? "#2ce07c" : "#bfc7d2");
   ctx.strokeStyle=g; ctx.lineWidth=5; ctx.lineCap="round";
   ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-r+58); ctx.stroke();
-
-  // Center hub (metallic)
-  const hubR = 20;
-  const m = ctx.createRadialGradient(0,0,4, 0,0,hubR);
+  // hub
+  const hubR=20, m=ctx.createRadialGradient(0,0,4,0,0,hubR);
   m.addColorStop(0,"#f7f7f7"); m.addColorStop(0.5,"#d0d6df"); m.addColorStop(1,"#8b96a8");
   ctx.fillStyle=m; ctx.beginPath(); ctx.arc(0,0,hubR,0,Math.PI*2); ctx.fill();
   ctx.strokeStyle="#1b2a3d"; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(0,0,hubR,0,Math.PI*2); ctx.stroke();
-
   ctx.restore();
 }
 function animateDial(){ dispAngle += (targAngle - dispAngle) * easing; drawGaugeBase(); drawNeedle(inTune); requestAnimationFrame(animateDial); }
 resizeCanvas(); animateDial();
 
-/* ===== Audio / Pitch (robust + auto-string detect) ===== */
+/* ===== Audio / Pitch + Auto-String + Perfect Pitch badge ===== */
 let AC, micNode, analyser, buf, rafId;
 let smoothCents = 0; const centsAlpha = 0.25;
 let detectHoldIdx = null, detectHoldFrames = 0;
+// small hysteresis to avoid flicker
+const PERFECT_THRESHOLD = 4;         // cents
+const PERFECT_HOLD_FRAMES = 8;       // ~ stable frames before showing Perfect Pitch
+let perfectFrames = 0;
 
 function ensureAC(){ if(!AC) AC = new (window.AudioContext||window.webkitAudioContext)({latencyHint:"interactive"}); if(AC.state==="suspended") AC.resume(); return AC; }
 document.addEventListener("visibilitychange",()=>{ if(AC && AC.state==="suspended") AC.resume(); });
@@ -292,7 +291,6 @@ document.addEventListener("visibilitychange",()=>{ if(AC && AC.state==="suspende
 async function startMic(){
   try{
     ensureAC();
-    // iOS unlock
     const s=AC.createBufferSource(); s.buffer=AC.createBuffer(1,1,AC.sampleRate); s.connect(AC.destination); s.start(); s.stop();
     const stream = await navigator.mediaDevices.getUserMedia({audio:true});
     micNode = AC.createMediaStreamSource(stream);
@@ -308,8 +306,8 @@ function stopMic(){
   if(micNode && micNode.mediaStream){ micNode.mediaStream.getTracks().forEach(t=>t.stop()); }
   micNode=null; analyser=null; buf=null;
   els.micState.textContent="OFF"; els.dot.classList.remove('live'); els.micBtn.textContent="Start Mic";
-  targAngle=0; inTune=false; els.big.textContent="—"; setStatus("—", "");
-  els.detected.textContent = "Detected: —";
+  targAngle=0; inTune=false; els.big.textContent="—"; setStateText("—","");
+  els.detected.textContent = "Detected: —"; perfectFrames=0;
 }
 
 function yin(b,sr){
@@ -328,14 +326,13 @@ function yin(b,sr){
 function nearestStringIdx(freq,a4){
   const set=TUNINGS[els.inst.value]||[];
   if(!set.length) return null;
-  let bestIdx=null, bestCents=1e9;
+  let bestIdx=null, bestCents=1e9, bestLabel="—", bestPos=-1;
   for(let i=0;i<set.length;i++){
-    const idx=parseNote(set[i]);
-    const hz=idxToFreq(idx,a4);
+    const idx=parseNote(set[i]); const hz=idxToFreq(idx,a4);
     const c=Math.abs(centsOff(freq,hz));
-    if(c<bestCents){ bestCents=c; bestIdx=idx; }
+    if(c<bestCents){ bestCents=c; bestIdx=idx; bestPos=i; bestLabel = `String ${i+1} — ${set[i]}`; }
   }
-  return {idx:bestIdx, cents:bestCents};
+  return {idx:bestIdx, label:bestLabel, pos:bestPos, cents:bestCents};
 }
 
 function loop(){
@@ -344,7 +341,7 @@ function loop(){
 
   analyser.getFloatTimeDomainData(buf);
 
-  // level
+  // level check
   let sumAbs=0; for(let i=0;i<buf.length;i++) sumAbs += Math.abs(buf[i]);
   const silent = sumAbs/buf.length < 1e-5;
 
@@ -354,104 +351,95 @@ function loop(){
   els.noInput.style.display = silent ? "inline-block" : "none";
 
   const gate=parseFloat(els.gate.value);
-  if(rms<gate || silent){ inTune=false; targAngle += (0 - targAngle)*0.12; setStatus("—",""); return; }
+  if(rms<gate || silent){ inTune=false; targAngle += (0 - targAngle)*0.12; setStateText("—",""); perfectFrames=0; return; }
 
   const sr=AC.sampleRate||48000;
   const f = yin(buf, sr);
-  if(!f || f<45 || f>1500){ inTune=false; targAngle += (0 - targAngle)*0.12; setStatus("—",""); return; }
+  if(!f || f<45 || f>1500){ inTune=false; targAngle += (0 - targAngle)*0.12; setStateText("—",""); perfectFrames=0; return; }
 
   const a4=+els.a4.value;
 
-  // Auto-string detection against selected instrument (if available)
-  let currentTargetIdx;
+  // Auto-detect played string
+  let targetIdx;
   const set=TUNINGS[els.inst.value]||[];
   if(set.length){
     const near = nearestStringIdx(f,a4);
     if(near){
-      // require a few consecutive frames before switching the dropdown
       if(detectHoldIdx===near.idx){ detectHoldFrames++; } else { detectHoldIdx=near.idx; detectHoldFrames=1; }
-      if(detectHoldFrames>=6){ // ~ stable ~
-        currentTargetIdx = near.idx;
-        // Update dropdown to the matched string
-        for(let i=0;i<els.string.options.length;i++){
-          if(+els.string.options[i].value===near.idx){ els.string.selectedIndex=i; break; }
-        }
-        els.detected.textContent = "Detected: " + els.string.options[els.string.selectedIndex].textContent;
+      if(detectHoldFrames>=6){
+        targetIdx = near.idx;
+        els.detected.textContent = "Detected: " + near.label;
+        if(near.pos>-1) els.string.selectedIndex = near.pos;
       }
     }
   }
-  // fallback: selected string or nearest chromatic
-  if(!currentTargetIdx){
-    currentTargetIdx = (els.string.disabled || !els.string.value)
-      ? freqToIdx(f,a4)
-      : +els.string.value;
-    if(els.string.disabled){
-      els.detected.textContent = "Detected: " + nameFromIdx(currentTargetIdx);
-    }
+  if(!targetIdx){
+    targetIdx = (els.string.disabled || !els.string.value) ? freqToIdx(f,a4) : +els.string.value;
+    if(els.string.disabled) els.detected.textContent = "Detected: " + nameFromIdx(targetIdx);
   }
 
-  const currentTargetHz = idxToFreq(currentTargetIdx, a4);
-  const dc = centsOff(f, currentTargetHz);
+  const targetHz = idxToFreq(targetIdx, a4);
+  const dc = centsOff(f, targetHz);
 
   // Smooth cents for relaxed dial
   smoothCents += (dc - smoothCents) * 0.25;
   const lim = Math.max(-50, Math.min(50, smoothCents));
   targAngle = DIRECTION * lim * 1.8;
 
-  // Status + UI
+  // PERFECT PITCH logic with hold to prevent flicker
   const absC = Math.abs(dc);
-  if(absC <= 4){ inTune=true; setStatus("Perfect pitch","ok"); }
-  else if(dc < 0){ inTune=false; setStatus("Too low","low"); }
-  else { inTune=false; setStatus("Too high","high"); }
+  if(absC <= PERFECT_THRESHOLD){ perfectFrames++; } else { perfectFrames = 0; }
+  if(perfectFrames >= PERFECT_HOLD_FRAMES){
+    inTune = true; setStateText("PERFECT PITCH","ok");
+  } else if(dc < 0){
+    inTune = false; setStateText("TOO LOW","low");
+  } else {
+    inTune = false; setStateText("TOO HIGH","high");
+  }
 
+  // Other UI
   els.big.style.background = inTune ? "var(--accent)" : "var(--flag)";
-  els.big.textContent = nameFromIdx(currentTargetIdx).replace("♯","#");
+  els.big.textContent = nameFromIdx(targetIdx).replace("♯","#");
   const nearest = freqToIdx(f,a4);
   els.note.textContent = N[(nearest%12+12)%12];
   els.freq.textContent = f.toFixed(2);
   els.cents.textContent = (dc>0?"+":"")+dc.toFixed(0);
-  els.target.textContent = nameFromIdx(currentTargetIdx);
+  els.target.textContent = nameFromIdx(targetIdx);
 }
 
-/* Status helper */
-function setStatus(text, kind){
-  els.status.textContent = text;
-  els.status.className = "status" + (kind?(" "+kind):"");
+function setStateText(text, kind){
+  els.state.textContent = text;
+  els.state.className = "state" + (kind?(" "+kind):"");
 }
 
-/* Metronome */
+/* Metronome (unchanged, compact) */
 class Metro{
   constructor(ac){ this.ac=ac; this.t=null; this.next=0; this.bpm=120; this.p=[1,0,0,0]; }
   set(bpm,sig){ this.bpm=Math.max(20,Math.min(240,bpm)); this.p=this.sig(sig); }
   sig(s){ const [t,b]=s.split("/").map(Number); return b===8?Array.from({length:t},(_,i)=>i%3===0):Array.from({length:t},(_,i)=>i===0); }
-  click(acc){
-    const t=this.ac.currentTime+0.005, o=this.ac.createOscillator(), g=this.ac.createGain();
+  click(acc){ const t=this.ac.currentTime+0.005, o=this.ac.createOscillator(), g=this.ac.createGain();
     o.type="square"; o.frequency.setValueAtTime(acc?1000:760,t);
     g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(acc?0.7:0.45,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+0.12);
-    o.connect(g).connect(this.ac.destination); o.start(t); o.stop(t+0.15);
-  }
+    o.connect(g).connect(this.ac.destination); o.start(t); o.stop(t+0.15); }
   start(bpm,sig){ this.set(bpm,sig); if(this.t) return; if(!AC) ensureAC(); if(AC.state==="suspended") AC.resume();
     this.next=AC.currentTime; let i=0; const loop=()=>{ const spb=60/this.bpm;
       while(this.next<AC.currentTime+0.1){ this.click(!!this.p[i%this.p.length]); i++; this.next+=spb; }
-      this.t=setTimeout(loop,25);
-    }; loop();
-  }
+      this.t=setTimeout(loop,25); }; loop(); }
   stop(){ if(this.t){ clearTimeout(this.t); this.t=null; } }
 }
 let metro=null;
-
-/* Buttons */
 els.metroBtn.addEventListener("click", ()=>{ if(!metro){ ensureAC(); metro=new Metro(AC); }
   if(els.metroBtn.textContent==="Start"){ metro.start(+els.bpm.value||120, els.sig.value); els.metroBtn.textContent="Stop"; }
   else { metro.stop(); els.metroBtn.textContent="Start"; } });
 
+/* Buttons */
 els.micBtn.addEventListener("click", ()=>{ if(!micNode) startMic(); else stopMic(); });
 els.stopAll.addEventListener("click", ()=>{ stopMic(); metro?.stop?.(); els.metroBtn.textContent="Start"; });
 
 /* Init */
 refreshStrings(); resizeCanvas();
 
-/* Utility for tunings parse used above */
+/* helper reused above */
 function parseNote(n){
   const m=n.replace("♯","#").replace("♭","b").match(/^([A-Ga-g])([#b]?)(-?\d+)$/);
   const map={C:0,"C#":1,"Db":1,D:2,"D#":3,"Eb":3,E:4,F:5,"F#":6,"Gb":6,G:7,"G#":8,"Ab":8,A:9,"A#":10,"Bb":10,B:11};
